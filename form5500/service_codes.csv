@@ -1,0 +1,56 @@
+Service,Code
+Accounting (including auditing),10
+Actuarial,11
+Claims processing,12
+Contract Administrator,13
+Plan Administrator,14
+"Recordkeeping and information management (computing, tabulating, data processing, etc.)",15
+Consulting (general),16
+Consulting (pension),17
+Custodial (other than securities),18
+Custodial (securities),19
+Trustee (individual),20
+"Trustee (bank, trust company or similar financial institution)",21
+Insurance agents and brokers,22
+Insurance services,23
+Trustee (discretionary),24
+Trustee (directed),25
+Investment advisory (participants),26
+Investment advisory (plan),27
+Investment management,28
+Legal,29
+Employee (plan),30
+Named fiduciary,31
+Real estate brokerage,32
+Securities brokerage,33
+"Valuation (appraisals, etc.)",34
+Employee (plan sponsor),35
+Copying and duplicating,36
+Participant loan processing,37
+Participant communication,38
+"Foreign entity (e.g., an agent or broker, bank, insurance company, etc. not operating within jurisdictional of the United States)",40
+Other services,49
+Direct payment from the plan,50
+Investment management fees paid directly by plan,51
+Investment management fees paid indirectly by plan,52
+Insurance brokerage commissions and fees,53
+Sales loads (front end and deferred),54
+Other commissions,55
+Non-monetary compensation,56
+Redemption fees,57
+"Product termination fees (surrender charges, etc.)",58
+Shareholder servicing fees,59
+Sub-transfer agency fees,60
+Finders' fees/placement fees,61
+Float revenue,62
+Distribution (12b-1) fees,63
+Recordkeeping fees,64
+Account maintenance fees,65
+Insurance mortality and expense charge,66
+Other insurance wrap fees,67
+"""'Soft dollar' commissions""",68
+Consulting fees,70
+Securities brokerage commissions and fees,71
+Other investment fees and expenses,72
+Other insurance fees and expenses,73
+Other (specify),99

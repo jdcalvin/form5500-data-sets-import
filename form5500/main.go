@@ -49,9 +49,6 @@ func main() {
 
 	if *isBuildFlag {
 		buildTable(connection, section, years)
-		for _, year := range years {
-			updateFromSchedules(connection, section, year)
-		}
 	}
 
 }

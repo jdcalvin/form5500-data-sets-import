@@ -17,11 +17,10 @@ func buildTable(connection string, section string, years []string) {
 	}
 	defer db.Close()
 
+	executableStatements := make([]string, 0)
+
 	for _, statement := range createSearchTable() {
-		_, err = db.Exec(statement)
-		if err != nil {
-			log.Fatal(err)
-		}
+		executableStatements = append(executableStatements, statement)
 	}
 
 	unionTables := make([]string, 0)
@@ -38,10 +37,25 @@ func buildTable(connection string, section string, years []string) {
 	}
 	cols += "table_origin"
 
-	insertStatement := fmt.Sprintf("INSERT INTO form_5500_search (%[1]s) SELECT %[1]s FROM (\n%[2]s\n) as f_s", cols, selectStatement)
-	_, err = db.Exec(insertStatement)
-	if err != nil {
-		log.Fatal(err)
+	insertStatement := fmt.Sprintf("INSERT INTO form_5500_search (%[1]s) SELECT %[1]s FROM (\n%[2]s\n) as f_s;", cols, selectStatement)
+	executableStatements = append(executableStatements, insertStatement)
+
+	for _, year := range years {
+		for _, statement := range updateFromSchedules(section, year) {
+			executableStatements = append(executableStatements, statement)
+		}
+	}
+
+	for _, statement := range createMaterializedView() {
+		executableStatements = append(executableStatements, statement)
+	}
+
+	for _, statement := range executableStatements {
+		// fmt.Println(statement)
+		_, err = db.Exec(statement)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 }
 

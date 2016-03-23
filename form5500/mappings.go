@@ -88,6 +88,12 @@ func tableMappings() []Mapping {
 			dataType:  "text",
 		},
 		{
+			longForm:  "\"TYPE_PENSION_BNFT_CODE\"",
+			shortForm: "\"SF_TYPE_PENSION_BNFT_CODE\"",
+			alias:     "pension_benefit_codes",
+			dataType:  "text",
+		},
+		{
 			longForm:  "\"ADMIN_NAME\"",
 			shortForm: "\"SF_ADMIN_NAME\"",
 			alias:     "admin_name",

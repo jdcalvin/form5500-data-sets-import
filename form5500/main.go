@@ -32,7 +32,7 @@ func main() {
 	var connectionPartial string
 	fmt.Println(*userFlag)
 	if *userFlag != "" && *passwordFlag != "" {
-		connectionPartial = fmt.Sprintf("username=%s password=%s ", *userFlag, *passwordFlag)
+		connectionPartial = fmt.Sprintf("user=%s password=%s ", *userFlag, *passwordFlag)
 	} else {
 		connectionPartial = ""
 	}

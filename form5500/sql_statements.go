@@ -5,7 +5,6 @@ import (
 )
 
 func updateFromSchedules(section string, year string) []string {
-
 	var executableStatements = []string{
 		updateFromScheduleH(section, year),
 		updateFromScheduleI(section, year),
@@ -14,7 +13,6 @@ func updateFromSchedules(section string, year string) []string {
 		updateProviderFromScheduleCItem2(section, year, "advisor", "'26','27'"),
 		updateProviderFromScheduleCItem3(section, year, "advisor", "'26','27'"),
 	}
-
 	return executableStatements
 }
 

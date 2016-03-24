@@ -10,6 +10,8 @@ const baseUrl string = "http://askebsa.dol.gov/FOIA%20Files/"
 
 var hostFlag = flag.String("host", "localhost", "connection host (default is localhost)")
 var portFlag = flag.String("port", "5432", "connection port (default is 5432)")
+var userFlag = flag.String("user", "", "username (optional)")
+var passwordFlag = flag.String("password", "", "password (optional)")
 var dbFlag = flag.String("db", "", "specify existing database to store data")
 var sslFlag = flag.Bool("ssl", false, "connection sslmode enabled")
 
@@ -27,6 +29,14 @@ func main() {
 		fmt.Println("Must specify import or build")
 	}
 
+	var connectionPartial string
+	fmt.Println(*userFlag)
+	if *userFlag != "" && *passwordFlag != "" {
+		connectionPartial = fmt.Sprintf("username=%s password=%s ", *userFlag, *passwordFlag)
+	} else {
+		connectionPartial = ""
+	}
+
 	var sslMode string
 
 	if *sslFlag {
@@ -39,7 +49,7 @@ func main() {
 
 	section := *sectionFlag
 
-	connection := fmt.Sprintf("host=%s port=%s dbname=%s sslmode=%s", *hostFlag, *portFlag, *dbFlag, sslMode)
+	connection := fmt.Sprintf("host=%s port=%s dbname=%s sslmode=%s %s", *hostFlag, *portFlag, *dbFlag, sslMode, connectionPartial)
 
 	if *isImportFlag {
 		for _, year := range years {

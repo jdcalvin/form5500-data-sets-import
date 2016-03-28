@@ -1,10 +1,10 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 	"strings"
+  "database/sql"
 )
 
 const form5500Search string = "form_5500_search"
@@ -29,7 +29,7 @@ func buildTable(connection string, section string, years []string) {
 		unionTables = append(unionTables, selectShortFormTable(year, section))
 	}
 
-	selectStatement := fmt.Sprintf("SELECT DISTINCT ON(sponsor_ein, plan_num) * FROM (\nSELECT * FROM (\n%s\n) foo ORDER BY date_received DESC) foo_1", strings.Join(unionTables, "\n      UNION ALL\n"))
+	selectStatement := strings.Join(unionTables, "\n      UNION ALL\n")
 
 	cols := ""
 	for _, row := range tableMappings() {
@@ -51,9 +51,9 @@ func buildTable(connection string, section string, years []string) {
 	}
 
 	for _, statement := range executableStatements {
-		// fmt.Println(statement)
 		_, err = db.Exec(statement)
 		if err != nil {
+      fmt.Println(statement)
 			log.Fatal(err)
 		}
 	}

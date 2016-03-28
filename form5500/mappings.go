@@ -142,14 +142,8 @@ func tableMappings() []Mapping {
 			dataType:  "text",
 		},
 		{
-			longForm:  "(\"PARTCP_ACCOUNT_BAL_CNT\"-\"TOT_ACTIVE_PARTCP_CNT\")",
-			shortForm: "NULL",
-			alias:     "terminated_participants",
-			dataType:  "int",
-		},
-		{
-			longForm:  "\"TOT_ACTIVE_PARTCP_CNT\"",
-			shortForm: "NULL",
+			longForm:  "\"PARTCP_ACCOUNT_BAL_CNT\"",
+			shortForm: "\"SF_PARTCP_ACCOUNT_BAL_CNT\"",
 			alias:     "active_participants",
 			dataType:  "int",
 		},

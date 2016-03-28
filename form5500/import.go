@@ -30,7 +30,7 @@ func runImport(connection string, year string, section string) {
 		}
 		fmt.Println("Created table: " + tableName)
 
-		csvFilename, err := downloadCSV(db, name, year, section)
+		csvFilename, err := downloadCSV(name, year, section)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -79,13 +79,13 @@ func tableNames() []string {
 		// "f_sch_sb_%s_%s",
 		// "f_sch_sb_part1_%s_%s",
 	}
-
 	return tables
 }
 
 func importCSV(connection string, tableName string, csvFilename string) error {
 	s := fmt.Sprintf(`TRUNCATE %s`, tableName)
 	fmt.Println(fmt.Sprintf(`psql %q -c %q`, connection, s))
+  
 	cmd := exec.Command("psql", connection, "-c", s)
 	output, err := cmd.Output()
 	if err != nil {
@@ -104,10 +104,12 @@ func importCSV(connection string, tableName string, csvFilename string) error {
 	return nil
 }
 
-func downloadCSV(db *sql.DB, name string, year string, section string) (string, error) {
+func downloadCSV(name string, year string, section string) (string, error) {
 	name = fmt.Sprintf(name, year, section)
 	url := baseUrl + fmt.Sprintf("%s/%s/%s.zip", year, section, name)
-
+  
+  fmt.Println("Dowloading ", url)
+  
 	zipFilename, err := downloadFile(name, url)
 	if err != nil {
 		log.Fatal(err)
@@ -151,7 +153,7 @@ func downloadCSV(db *sql.DB, name string, year string, section string) (string, 
 func createTable(db *sql.DB, name string, year string, section string) (string, error) {
 	tableName := fmt.Sprintf(name, year, section)
 	url := baseUrl + fmt.Sprintf("%s/%s/%s_layout.txt", year, section, tableName)
-
+  fmt.Println("Downloading ", url)
 	resp, err := http.Get(url)
 	if err != nil {
 		return "", err

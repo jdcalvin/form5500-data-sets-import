@@ -8,15 +8,15 @@ import (
 
 const baseUrl string = "http://askebsa.dol.gov/FOIA%20Files/"
 
-var hostFlag = flag.String("host", "localhost", "connection host (default is localhost)")
-var portFlag = flag.String("port", "5432", "connection port (default is 5432)")
+var hostFlag = flag.String("host", "localhost", "connection host")
+var portFlag = flag.String("port", "5432", "connection port")
 var userFlag = flag.String("user", "", "username (optional)")
 var passwordFlag = flag.String("password", "", "password (optional)")
 var dbFlag = flag.String("db", "", "specify existing database to store data")
 var sslFlag = flag.Bool("ssl", false, "connection sslmode enabled")
 
 var yearsFlag = flag.String("years", "", "Specify form5500 year")
-var sectionFlag = flag.String("section", "", "Specify form5500 section ('all', 'latest')")
+var sectionFlag = flag.String("section", "", "Specify form5500 section ('all' or 'latest')")
 
 var isImportFlag = flag.Bool("import", false, "Download csvs into database")
 

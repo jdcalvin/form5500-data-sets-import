@@ -16,15 +16,19 @@ Usage of form5500:
   -db string
     	specify existing database to store data
   -host string
-    	connection host (default is localhost) (default "localhost")
+    	connection host (default "localhost")
   -import
     	Download csvs into database
+  -password string
+    	password (optional)
   -port string
-    	connection port (default is 5432) (default "5432")
+    	connection port (default "5432")
   -section string
-    	Specify form5500 section ('all', 'latest')
+    	Specify form5500 section ('all' or 'latest')
   -ssl
     	connection sslmode enabled
+  -user string
+    	username (optional)
   -years string
     	Specify form5500 year
   ```

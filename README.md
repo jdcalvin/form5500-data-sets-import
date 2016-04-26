@@ -8,6 +8,13 @@ http://www.dol.gov/ebsa/foia/foia-5500.html
 `go install github.com/jdcalvin/form5500-data-sets-import/form5500`
 
 ### Usage
+##### Download csvs and store in specified database (host, password, port are optional)
+  
+  `form5500 -import -db $DB_NAME -host $HOST -user $USER -password $DB_PASSWORD  -port 5432 -section latest -years 2013,2014,2015`
+  
+##### Parse imported data from specified years and aggregate into form5500_search table 
+  `form5500 -build`
+  
 ##### Options
 ```
 Usage of form5500:

@@ -22,6 +22,12 @@ func tableMappings() []Mapping {
 			dataType:  "text",
 		},
 		{
+			longForm:  "\"PLAN_EFF_DATE\"",
+			shortForm: "\"SF_PLAN_EFF_DATE\"",
+			alias:     "effective_date",
+			dataType:  "timestamp",
+		},
+		{
 			longForm:  "\"PLAN_NAME\"",
 			shortForm: "\"SF_PLAN_NAME\"",
 			alias:     "plan_name",

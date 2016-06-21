@@ -19,14 +19,14 @@ var yearsFlag = flag.String("years", "", "Specify form5500 year")
 var sectionFlag = flag.String("section", "", "Specify form5500 section ('all' or 'latest')")
 
 var isImportFlag = flag.Bool("import", false, "Download csvs into database")
-
 var isBuildFlag = flag.Bool("build", false, "Builds form5500_search table from all long form and short form form5500 tables")
+var isExtensionFlag = flag.String("extension", "", "Add extensions to ")
 
 func main() {
 	flag.Parse()
 
-	if (!*isImportFlag && !*isBuildFlag) || (*isImportFlag && *isBuildFlag) {
-		fmt.Println("Must specify import or build")
+	if (!*isImportFlag && !*isBuildFlag && (*isExtensionFlag == "") || (*isImportFlag && *isBuildFlag && (*isExtensionFlag != ""))) {
+		fmt.Println("Must specify import, build, or an extension")
 	}
 
 	var connectionPartial string
@@ -59,6 +59,10 @@ func main() {
 
 	if *isBuildFlag {
 		buildTable(connection, section, years)
+	}
+
+	if *isExtensionFlag != "" {
+		callExtension(connection, *isExtensionFlag)
 	}
 
 }

@@ -17,7 +17,7 @@ func buildTable(connection string, section string, years []string) {
 	}
 	defer db.Close()
 
-	executableStatements := make([]string, 0)
+	executableStatements := make([]Statement, 0)
 
 	for _, statement := range createSearchTable() {
 		executableStatements = append(executableStatements, statement)
@@ -35,23 +35,33 @@ func buildTable(connection string, section string, years []string) {
 	for _, row := range tableMappings() {
 		cols += row.alias + ","
 	}
+
 	cols += "table_origin"
 
 	insertStatement := fmt.Sprintf("INSERT INTO form_5500_search (%[1]s) SELECT %[1]s FROM (\n%[2]s\n) as f_s;", cols, selectStatement)
-	executableStatements = append(executableStatements, insertStatement)
+	executableStatements = append(executableStatements, Statement{sql: insertStatement, description: "Inserting records into form_5500_search"})
 
+	// - Set total assets on form_5500_search from schedule H, or I
+	// - Set providers on form_5500_search from schedule C if applicable (long form only)
+	//   based on service codes http://freeerisa.benefitspro.com/static/popups/legends.aspx#5500c09
 	for _, year := range years {
 		for _, statement := range updateFromSchedules(section, year) {
 			executableStatements = append(executableStatements, statement)
 		}
 	}
 
+	// - Create materialized view form5500_search_view
 	for _, statement := range createMaterializedView() {
-		executableStatements = append(executableStatements, statement)
+		executableStatements = append(executableStatements, Statement{sql: statement, description: "Creating materialized view"})
+	}
+	// - Create index for each column in form5500_search_view
+	for _, row := range tableMappings() {
+		executableStatements = append(executableStatements, buildIndexStatement(row.alias))
 	}
 
 	for _, statement := range executableStatements {
-		_, err = db.Exec(statement)
+		fmt.Println(fmt.Sprintf("  - %s", statement.description))
+		_, err = db.Exec(statement.sql)
 		if err != nil {
       fmt.Println(statement)
 			log.Fatal(err)
@@ -61,11 +71,18 @@ func buildTable(connection string, section string, years []string) {
 
 //private
 
-func createSearchTable() []string {
-	sqlLines := make([]string, 0)
-	sqlLines = append(sqlLines, fmt.Sprintf("DROP TABLE IF EXISTS %s CASCADE;", form5500Search))
-	sqlLines = append(sqlLines, fmt.Sprintf("CREATE TABLE %s (%s);", form5500Search, tableColumns()))
-	return sqlLines
+func buildIndexStatement(field string) Statement {
+	return Statement{
+					sql: fmt.Sprintf("CREATE INDEX idx_%[1]s ON form5500_search_view (%[1]s);", field), 
+					description: fmt.Sprintf("Creating index idx_%[1]s", field),
+				}
+}
+
+func createSearchTable() []Statement {
+	statements := make([]Statement, 0)
+	statements = append(statements, Statement{sql: fmt.Sprintf("DROP TABLE IF EXISTS %s CASCADE;", form5500Search), 			description: "drop form5500_search table"})
+	statements = append(statements, Statement{sql: fmt.Sprintf("CREATE TABLE %s (%s);", form5500Search, tableColumns()), 	description: "create form5500_search table"})
+	return statements
 }
 
 func tableColumns() string {

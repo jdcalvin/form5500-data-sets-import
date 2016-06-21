@@ -4,14 +4,32 @@ import (
 	"fmt"
 )
 
-func updateFromSchedules(section string, year string) []string {
-	var executableStatements = []string{
-		updateFromScheduleH(section, year),
-		updateFromScheduleI(section, year),
-		updateProviderFromScheduleCItem2(section, year, "rk", "'15','23', '60'"),
-		updateProviderFromScheduleCItem3(section, year, "rk", "'15','23', '60'"),
-		updateProviderFromScheduleCItem2(section, year, "advisor", "'26','27'"),
-		updateProviderFromScheduleCItem3(section, year, "advisor", "'26','27'"),
+func updateFromSchedules(section string, year string) []Statement {
+	var executableStatements = []Statement{
+		{
+      sql: updateFromScheduleH(section, year),
+      description: "Add info from schedule H",
+    },
+		{
+      sql: updateFromScheduleI(section, year), 
+      description: "Add info from schedule I",
+    },
+		{
+      sql: updateProviderFromScheduleCItem2(section, year, "rk", "'15','23', '60'"),
+      description: "Determining Recordkeeper from schedule C item 2",
+    },
+		{
+      sql: updateProviderFromScheduleCItem3(section, year, "rk", "'15','23', '60'"),
+      description: "Determining Recordkeeper from schedule C item 3",
+    },
+		{
+      sql: updateProviderFromScheduleCItem2(section, year, "advisor", "'26','27'"),
+      description: "Determining Advisor from schedule C item 2",
+    },
+		{
+      sql: updateProviderFromScheduleCItem3(section, year, "advisor", "'26','27'"),
+      description: "Determining Advisor from schedule C item 2",
+    },
 	}
 	return executableStatements
 }
@@ -26,6 +44,55 @@ func createMaterializedView() []string {
 		"CREATE INDEX idx_fts_sponsor ON form5500_search_view USING gin(sponsor_search);",
 	}
 	return executableStatements
+}
+
+func createZipCodesTable() []string {
+  var executableStatements = []string {
+    "DROP TABLE IF EXISTS zip_codes",
+    `CREATE TABLE zip_codes (
+      zip integer,
+      city varchar(256),
+      state varchar(2),
+      latitude double precision,
+      longitude double precision,
+      timezone integer,
+      dst integer
+    )`,
+  }
+  return executableStatements
+}
+
+func createZipCodeSearchFunction() []string {
+  // This may need to be installed from some other source on the server
+  var executableStatements= []string {
+    "CREATE EXTENSION IF NOT EXISTS cube",
+    "CREATE EXTENSION IF NOT EXISTS earthdistance",
+    `DROP FUNCTION IF EXISTS udf_distance_in_miles_from_zip(_miles integer, _zip integer);
+    CREATE OR REPLACE FUNCTION udf_distance_in_miles_from_zip(_miles integer, _zip integer)
+      RETURNS table (
+        zip integer,
+        city varchar(256),
+        state varchar(2),
+        latitude double precision,
+        longitude double precision,
+        distance double precision
+      ) AS
+      $$
+        DECLARE
+          _lon double precision;
+          _lat double precision;
+        BEGIN
+          _lon := (SELECT zip_codes.longitude FROM zip_codes WHERE zip_codes.zip = _zip);
+          _lat := (SELECT zip_codes.latitude FROM zip_codes WHERE zip_codes.zip = _zip);
+          RETURN QUERY
+          SELECT zip_codes.zip, zip_codes.state, zip_codes.city, zip_codes.latitude, zip_codes.longitude,
+            point(_lon, _lat) <@> point(zip_codes.longitude, zip_codes.latitude)::point as distance FROM zip_codes
+            WHERE (point(_lon, _lat) <@> point(zip_codes.longitude, zip_codes.latitude) < _miles);
+        END
+      $$
+    LANGUAGE 'plpgsql' STABLE;`,
+  }
+  return executableStatements
 }
 
 //private

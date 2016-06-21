@@ -5,7 +5,10 @@ import (
 	"log"
   "database/sql"
   "os"
+  "net/http"
+  "strings"
   "path/filepath"
+  "io"
 )
 
 func callExtension(connection string, extension string) {
@@ -27,7 +30,6 @@ func callExtension(connection string, extension string) {
 //private
 
 func zipCodeSearchable(db *sql.DB, connection string) error {
-
 	fmt.Println("  - Creating zip codes table")
 	for _, statement := range createZipCodesTable() {
 		_, err := db.Exec(statement)
@@ -58,24 +60,42 @@ func zipCodeSearchable(db *sql.DB, connection string) error {
 }
 
 func importZipCodes() Statement {
+	url := "https://raw.githubusercontent.com/jdcalvin/form5500-data-sets-import/master/form5500/zipcode.csv"
+	tokens := strings.Split(url, "/")
+	fileName := tokens[len(tokens)-1]
+	fmt.Println("  - Downloading", url, "to", fileName)
+
+	// TODO: check file existence first with io.IsExist
+	output, err := os.Create(fileName)
+	if err != nil {
+		fmt.Println("Error while creating", fileName, "-", err)
+	}
+	defer output.Close()
+
+	response, err := http.Get(url)
+	if err != nil {
+		fmt.Println("Error while downloading", url, "-", err)
+	}
+	defer response.Body.Close()
+
+	n, err := io.Copy(output, response.Body)
+	if err != nil {
+		fmt.Println("Error while downloading", url, "-", err)
+		fmt.Println(n)
+	}
+
 	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {
+    fmt.Println(dir)
 		log.Fatal(err)
-		fmt.Println(dir)
 	}
+
+	copyStatement := fmt.Sprintf("COPY zip_codes FROM '%s/%s' DELIMITER ',' CSV HEADER", dir,fileName)
+	fmt.Println(copyStatement)
 	return Statement{
-		sql: fmt.Sprintf("COPY zip_codes FROM '%s/zipcode.csv' DELIMITER ',' CSV HEADER", dir),
-		description: "Copying zip codes into table zip_codes",
+		sql: copyStatement,
+		description: "Copying zip codes from csv into table zip_codes",
 	}
-	// s := fmt.Sprintf(`\copy %s FROM '%s' DELIMITER ',' CSV HEADER`, tableName, "zipcode.csv")
-	// fmt.Println("psql \"" + connection + "\" -c \"" + s + "\"")
-	// cmd := exec.Command("psql", connection, "-c", s)
-	// output, err := cmd.Output()
-	// if err != nil {
-	// 	return err
-	// }
-	// fmt.Println(string(output))
-	// return nil
 }
 
 

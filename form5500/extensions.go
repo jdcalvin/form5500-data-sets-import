@@ -91,7 +91,6 @@ func importZipCodes() Statement {
 	}
 
 	copyStatement := fmt.Sprintf("COPY zip_codes FROM '%s/%s' DELIMITER ',' CSV HEADER", dir,fileName)
-	fmt.Println(copyStatement)
 	return Statement{
 		sql: copyStatement,
 		description: "Copying zip codes from csv into table zip_codes",

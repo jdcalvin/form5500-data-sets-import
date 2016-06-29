@@ -9,6 +9,7 @@ import (
   "strings"
   "path/filepath"
   "io"
+	"os/exec"
 )
 
 func callExtension(connection string, extension string) {
@@ -39,14 +40,7 @@ func zipCodeSearchable(db *sql.DB, connection string) error {
 		}
 	}
 
-	importZip := importZipCodes()
-	fmt.Println(fmt.Sprintf("  - %s",importZip.description))
-	_, err := db.Exec(importZip.sql)
-	if err != nil {
-		fmt.Println("test")
-		fmt.Println(importZip)
-		log.Fatal(err)
-	}
+	importZipCodes(connection)
 
 	fmt.Println("  - Adding udf_distance_in_miles_from_zip(_miles integer, _zip integer)")
 	for _, statement := range createZipCodeSearchFunction() {
@@ -59,7 +53,19 @@ func zipCodeSearchable(db *sql.DB, connection string) error {
 	return nil
 }
 
-func importZipCodes() Statement {
+func importZipCodes(connection string) error{	
+	csvFileName := downloadZipCodeCsv()
+	s := fmt.Sprintf(`\copy zip_codes FROM '%s' DELIMITER ',' CSV HEADER`, csvFileName)
+	fmt.Println("-  Executing: psql \"" + connection + "\" -c \"" + s + "\"")
+	cmd := exec.Command("psql", connection, "-c", s)
+	_, err := cmd.Output()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func downloadZipCodeCsv() string {
 	url := "https://raw.githubusercontent.com/jdcalvin/form5500-data-sets-import/master/form5500/zipcode.csv"
 	tokens := strings.Split(url, "/")
 	fileName := tokens[len(tokens)-1]
@@ -89,12 +95,7 @@ func importZipCodes() Statement {
     fmt.Println(dir)
 		log.Fatal(err)
 	}
-
-	copyStatement := fmt.Sprintf("COPY zip_codes FROM '%s/%s' DELIMITER ',' CSV HEADER", dir,fileName)
-	return Statement{
-		sql: copyStatement,
-		description: "Copying zip codes from csv into table zip_codes",
-	}
+	return fmt.Sprintf("%s/%s", dir, fileName)
 }
 
 

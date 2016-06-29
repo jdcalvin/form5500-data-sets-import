@@ -40,5 +40,13 @@ Usage of form5500:
     	Specify form5500 year
   ```
 
-#### Reference
-zip_code.csv provided by http://federalgovernmentzipcodes.us/
+### Extensions
+#### Search by zip code
+Quickly retrieve all form5500 records by distance from sponsor or admin zip code
+
+`form5500 -extension zip_codes -db dbname`
+
+example query will return all form5500 records where the sponsor is 10 miles within 97202
+```
+SELECT * FROM form5500_search_view WHERE substring(sponsor_zip,1,5)::int IN (select zip from udf_distance_in_miles_from_zip(10,97202))
+```

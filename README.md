@@ -53,4 +53,5 @@ SELECT * FROM form5500_search_view WHERE substring(sponsor_zip,1,5)::int IN (sel
 
 ### Debugging
 build `go build ./form5500`
+
 test `go test ./form5500/...`

@@ -1,0 +1,14 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "Launch",
+			"type": "go",
+			"request": "launch",
+			"mode": "debug",
+			"program": "${workspaceRoot}/form5500",
+			"env": {},
+			"args": ["-section", "latest", "-years", "2013,2014,2015", "-db", "form5500_data", "-build"]
+		}
+	]
+}

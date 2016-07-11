@@ -50,3 +50,7 @@ example query will return all form5500 records where the sponsor is 10 miles wit
 ```
 SELECT * FROM form5500_search_view WHERE substring(sponsor_zip,1,5)::int IN (select zip from udf_distance_in_miles_from_zip(10,97202))
 ```
+
+### Debugging
+build `go build ./form5500`
+test `go test ./form5500/...`

@@ -1,10 +1,11 @@
-package main
+package form5500
 
 import (
 	"fmt"
 	"log"
 	"strings"
   "database/sql"
+	utils "github.com/jdcalvin/form5500-data-sets-import/form5500/internal/utils"
 )
 
 const form5500Search string = "form_5500_search"
@@ -17,6 +18,19 @@ func buildTable(connection string, section string, years []string) {
 	}
 	defer db.Close()
 
+	for _, statement := range buildStatements(section, years) {
+		fmt.Println(fmt.Sprintf("  - %s", statement.description))
+		_, err = db.Exec(statement.sql)
+		if err != nil {
+      fmt.Println(statement)
+			log.Fatal(err)
+		}
+	}
+}
+
+//private
+
+func buildStatements(section string, years []string) []Statement {
 	executableStatements := make([]Statement, 0)
 
 	for _, statement := range createSearchTable() {
@@ -30,10 +44,9 @@ func buildTable(connection string, section string, years []string) {
 	}
 
 	selectStatement := strings.Join(unionTables, "\n      UNION ALL\n")
-
 	cols := ""
-	for _, row := range tableMappings() {
-		cols += row.alias + ","
+	for _, row := range utils.TableMappings() {
+		cols += row.Alias + ","
 	}
 
 	cols += "table_origin"
@@ -55,26 +68,17 @@ func buildTable(connection string, section string, years []string) {
 		executableStatements = append(executableStatements, Statement{sql: statement, description: "Creating materialized view"})
 	}
 	// - Create index for each column in form5500_search_view
-	for _, row := range tableMappings() {
-		executableStatements = append(executableStatements, buildIndexStatement(row.alias))
+	for _, row := range utils.TableMappings() {
+		executableStatements = append(executableStatements, buildIndexStatement(row))
 	}
-
-	for _, statement := range executableStatements {
-		fmt.Println(fmt.Sprintf("  - %s", statement.description))
-		_, err = db.Exec(statement.sql)
-		if err != nil {
-      fmt.Println(statement)
-			log.Fatal(err)
-		}
-	}
+	return executableStatements
+	
 }
 
-//private
-
-func buildIndexStatement(field string) Statement {
+func buildIndexStatement(mapping utils.Mapping) Statement {
 	return Statement{
-					sql: fmt.Sprintf("CREATE INDEX idx_%[1]s ON form5500_search_view (%[1]s);", field), 
-					description: fmt.Sprintf("Creating index idx_%[1]s", field),
+					sql: fmt.Sprintf("CREATE INDEX ON form5500_search_view (%[1]s);", mapping.IndexName()), 
+					description: fmt.Sprintf("Creating index %[1]s", mapping.IndexName()),
 				}
 }
 
@@ -87,8 +91,8 @@ func createSearchTable() []Statement {
 
 func tableColumns() string {
 	var cols string
-	for _, row := range tableMappings() {
-		cols += fmt.Sprintf("%s %s, ", row.alias, row.dataType)
+	for _, row := range utils.TableMappings() {
+		cols += fmt.Sprintf("%s %s, ", row.Alias, row.DataType)
 	}
 	var providerCols = []string{
 		"rk_name", "rk_ein", "tpa_name", "tpa_ein", "advisor_name", "advisor_ein",
@@ -102,8 +106,8 @@ func tableColumns() string {
 
 func selectLongFormTable(year string, section string) string {
 	statement := "   SELECT "
-	for _, row := range tableMappings() {
-		statement += fmt.Sprintf("%s as %s, ", row.longForm, row.alias)
+	for _, row := range utils.TableMappings() {
+		statement += fmt.Sprintf("%s as %s, ", row.LongForm, row.Alias)
 	}
 	statement += fmt.Sprintf("'%[1]s_%[2]s' as table_origin from f_5500_%[1]s_%[2]s as f_%[1]s", year, section)
 	return statement
@@ -111,8 +115,8 @@ func selectLongFormTable(year string, section string) string {
 
 func selectShortFormTable(year string, section string) string {
 	statement := "   SELECT "
-	for _, row := range tableMappings() {
-		statement += fmt.Sprintf("%s as %s, ", row.shortForm, row.alias)
+	for _, row := range utils.TableMappings() {
+		statement += fmt.Sprintf("%s as %s, ", row.ShortForm, row.Alias)
 	}
 	statement += fmt.Sprintf("'sf_%[1]s_%[2]s' as table_origin from f_5500_sf_%[1]s_%[2]s as f_%[1]s_sf", year, section)
 	return statement

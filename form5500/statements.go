@@ -1,4 +1,4 @@
-package main
+package form5500
 
 type Statement struct {
   sql  string

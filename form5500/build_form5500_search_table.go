@@ -1,4 +1,4 @@
-package form5500
+package main
 
 import (
 	"fmt"
@@ -72,13 +72,12 @@ func buildStatements(section string, years []string) []Statement {
 		executableStatements = append(executableStatements, buildIndexStatement(row))
 	}
 	return executableStatements
-	
 }
 
 func buildIndexStatement(mapping utils.Mapping) Statement {
 	return Statement{
-					sql: fmt.Sprintf("CREATE INDEX ON form5500_search_view (%[1]s);", mapping.IndexName()), 
-					description: fmt.Sprintf("Creating index %[1]s", mapping.IndexName()),
+					sql: 					fmt.Sprintf("CREATE INDEX %[1]s ON form5500_search_view (%[2]s);", mapping.IndexName(), mapping.Alias), 
+					description: 	fmt.Sprintf("Creating index %[1]s", mapping.IndexName()),
 				}
 }
 
@@ -100,6 +99,18 @@ func tableColumns() string {
 	for _, col := range providerCols {
 		cols += col + " text,"
 	}
+
+	var investmentTypes = []string{
+		"inv_collective_trusts",
+		"inv_separate_accounts",
+		"inv_mutual_funds",
+		"inv_general_accounts",
+		"inv_company_stock",
+	}
+	for _, col := range investmentTypes {
+		cols += col + " boolean,"
+	}
+
 	cols += "table_origin text"
 	return cols
 }

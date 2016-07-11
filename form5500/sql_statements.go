@@ -1,4 +1,4 @@
-package form5500
+package main
 
 import (
 	"fmt"
@@ -8,27 +8,27 @@ func updateFromSchedules(section string, year string) []Statement {
 	var executableStatements = []Statement{
 		{
       sql: updateFromScheduleH(section, year),
-      description: "Add info from schedule H",
+      description: fmt.Sprintf("Add info from schedule H %s", year),
     },
 		{
       sql: updateFromScheduleI(section, year), 
-      description: "Add info from schedule I",
+      description: fmt.Sprintf("Add info from schedule I %s", year),
     },
 		{
       sql: updateProviderFromScheduleCItem2(section, year, "rk", "'15','23', '60'"),
-      description: "Determining Recordkeeper from schedule C item 2",
+      description: fmt.Sprintf("Determining Recordkeeper from schedule C item 2 %s", year),
     },
 		{
       sql: updateProviderFromScheduleCItem3(section, year, "rk", "'15','23', '60'"),
-      description: "Determining Recordkeeper from schedule C item 3",
+      description: fmt.Sprintf("Determining Recordkeeper from schedule C item 3 %s", year),
     },
 		{
       sql: updateProviderFromScheduleCItem2(section, year, "advisor", "'26','27'"),
-      description: "Determining Advisor from schedule C item 2",
+      description: fmt.Sprintf("Determining Advisor from schedule C item 2 %s", year),
     },
 		{
       sql: updateProviderFromScheduleCItem3(section, year, "advisor", "'26','27'"),
-      description: "Determining Advisor from schedule C item 2",
+      description: fmt.Sprintf("Determining Advisor from schedule C item 2 %s", year),
     },
 	}
 	return executableStatements
@@ -100,14 +100,23 @@ func createZipCodeSearchFunction() []string {
 func updateFromScheduleH(section string, year string) string {
 	joinField := "\"ACK_ID\""
 
-	updateField := "\"TOT_ASSETS_EOY_AMT\""
 
 	scheduleTable := fmt.Sprintf("f_sch_h_%s_%s", year, section)
 
-	selectStatement := fmt.Sprintf("SELECT ack_id, %[5]s FROM form_5500_search  JOIN %[3]s ON %[3]s.%[4]s = form_5500_search.ack_id", year, section, scheduleTable, joinField, updateField)
+	selectStatement := fmt.Sprintf("SELECT * FROM form_5500_search  JOIN %[3]s ON %[3]s.%[4]s = form_5500_search.ack_id", year, section, scheduleTable, joinField)
 
-	updateStatement := fmt.Sprintf("UPDATE form_5500_search as f SET total_assets=foo_1.%[1]s FROM (%[2]s) as foo_1 WHERE foo_1.ack_id=f.ack_id", updateField, selectStatement)
-	return updateStatement
+  // cast numeric value from investment types to a boolean true or NULL
+  updateStatement := `
+    UPDATE form_5500_search as f 
+      SET total_assets = "TOT_ASSETS_EOY_AMT",
+          inv_collective_trusts = NULLIF(substring(abs("INT_COMMON_TR_EOY_AMT")::varchar, 1,1),'')::int::boolean,
+          inv_separate_accounts = NULLIF(substring(abs("INT_POOL_SEP_ACCT_EOY_AMT")::varchar, 1,1),'')::int::boolean,
+          inv_mutual_funds = NULLIF(substring(abs("INT_REG_INVST_CO_EOY_AMT")::varchar, 1,1),'')::int::boolean,
+          inv_general_accounts = NULLIF(substring(abs("INS_CO_GEN_ACCT_EOY_AMT")::varchar, 1,1),'')::int::boolean,
+          inv_company_stock = NULLIF(substring(abs("EMPLR_SEC_EOY_AMT")::varchar, 1,1),'')::int::boolean
+    FROM (%[1]s) as foo_1 WHERE foo_1.ack_id=f.ack_id
+  `
+	return fmt.Sprintf(updateStatement, selectStatement)
 }
 
 func updateFromScheduleI(section string, year string) string {

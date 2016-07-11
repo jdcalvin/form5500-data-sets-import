@@ -167,36 +167,6 @@ func TableMappings() []Mapping {
 			Alias:     "total_assets",
 			DataType:  "numeric(19,2)",
 		},
-		{
-			LongForm: 	"\"INT_COMMON_TR_EOY_AMT\"",
-			ShortForm:  "0",
-			Alias: 			"inv_collective_trusts",
-			DataType:   "numeric(19,2)",
-		},
-		{
-			LongForm: 	"\"INT_POOL_SEP_ACCT_EOY_AMT\"",
-			ShortForm:  "0",
-			Alias: 			"inv_separate_accounts",
-			DataType:   "numeric(19,2)",
-		},
-		{
-			LongForm: 	"\"INT_REG_INVST_CO_EOY_AMT\"",
-			ShortForm:  "0",
-			Alias: 			"inv_mutual_funds",
-			DataType:   "numeric(19,2)",
-		},
-		{
-			LongForm: 	"\"INS_CO_GEN_ACCT_EOY_AMT\"",
-			ShortForm:  "0",
-			Alias: 			"inv_general_accounts",
-			DataType:   "numeric(19,2)",
-		},
-		{
-			LongForm: 	"\"EMPLR_SEC_EOY_AM\"",
-			ShortForm:  "0",
-			Alias: 			"inv_company_stock",
-			DataType:   "numeric(19,2)",
-		},
 	}
 
 	return mappings

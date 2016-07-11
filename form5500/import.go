@@ -1,4 +1,4 @@
-package form5500
+package main
 
 import (
 	"archive/zip"

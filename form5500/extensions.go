@@ -11,38 +11,32 @@ import (
 	utils "github.com/jdcalvin/form5500-data-sets-import/form5500/internal/utils"
 )
 
-func callExtension(connection string, extension string) {
-	SetDBConnection(connection)
-	OpenDBConnection()
-	defer CloseDBConnection()
-
+func callExtension(extension string) {
 	if (extension == "zip_codes") {
 		fmt.Println("Adding zip codes extension")
-		createZipCodeTable := SQLRunner{
-														sql:          utils.ReadFile("sql/zip_codes/create_table.sql"),
-														description:  "Create zip_codes table",
+		createZipCodeTable := utils.SQLRunner{
+														Sql:          utils.ReadFile("sql/zip_codes/create_table.sql"),
+														Description:  "Create zip_codes table",
 													}
 
-		importZipCode := SQLRunner{
-												sql: fmt.Sprintf(`\copy zip_codes FROM '%s' DELIMITER ',' CSV HEADER`, downloadZipCodeCsv()),
-												description: "Importing zip codes into zip_codes table",
+		importZipCode := utils.SQLRunner{
+												Sql: fmt.Sprintf(`\copy zip_codes FROM '%s' DELIMITER ',' CSV HEADER`, downloadZipCodeCsv()),
+												Description: "Importing zip codes into zip_codes table",
 											}
 
-		createZipCodeFunction := SQLRunner{
-															sql:          utils.ReadFile("sql/zip_codes/create_search_function.sql"),
-															description:  "Create zip code search function",
+		createZipCodeFunction := utils.SQLRunner{
+															Sql:          utils.ReadFile("sql/zip_codes/create_search_function.sql"),
+															Description:  "Create zip code search function",
 														}
 
 		createZipCodeTable.Exec()
 
-		importZipCode.ExecCopy()
+		importZipCode.ExecCLI()
 		createZipCodeFunction.Exec()
 
 	} else {
 		log.Fatal("Invalid extension")
 	}
-	
-	defer db.Close()
 }
 
 //private

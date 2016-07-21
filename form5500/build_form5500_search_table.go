@@ -8,13 +8,9 @@ import (
 
 const form5500Search string = "form_5500_search"
 
-func buildTable(connection string, section string, years []string) {
+func buildTable(section string, years []string) {
 	fmt.Println("Building form_5500_search table...")
 
-	SetDBConnection(connection)
-	OpenDBConnection()
-	defer CloseDBConnection()
-	
 	for _, statement := range buildStatements(section, years) {
 		statement.Exec()
 	}
@@ -22,8 +18,8 @@ func buildTable(connection string, section string, years []string) {
 
 //private
 
-func buildStatements(section string, years []string) []SQLRunner {
-	executableStatements := make([]SQLRunner, 0)
+func buildStatements(section string, years []string) []utils.SQLRunner {
+	executableStatements := make([]utils.SQLRunner, 0)
 
 	for _, statement := range createSearchTable() {
 		executableStatements = append(executableStatements, statement)
@@ -44,7 +40,7 @@ func buildStatements(section string, years []string) []SQLRunner {
 	cols += "table_origin"
 
 	insertStatement := fmt.Sprintf("INSERT INTO form_5500_search (%[1]s) SELECT %[1]s FROM (\n%[2]s\n) as f_s;", cols, selectStatement)
-	executableStatements = append(executableStatements, SQLRunner{sql: insertStatement, description: "Inserting records into form_5500_search"})
+	executableStatements = append(executableStatements, utils.SQLRunner{Sql: insertStatement, Description: "Inserting records into form_5500_search"})
 
 	// - Set total assets on form_5500_search from schedule H, or I
 	// - Set providers on form_5500_search from schedule C if applicable (long form only)
@@ -66,17 +62,17 @@ func buildStatements(section string, years []string) []SQLRunner {
 	return executableStatements
 }
 
-func buildIndexStatement(mapping utils.Mapping) SQLRunner {
-	return SQLRunner{
-					sql: 					fmt.Sprintf("CREATE INDEX %[1]s ON form5500_search_view (%[2]s);", mapping.IndexName(), mapping.Alias), 
-					description: 	fmt.Sprintf("Creating index %[1]s", mapping.IndexName()),
+func buildIndexStatement(mapping utils.Mapping) utils.SQLRunner {
+	return utils.SQLRunner{
+					Sql: 					fmt.Sprintf("CREATE INDEX %[1]s ON form5500_search_view (%[2]s);", mapping.IndexName(), mapping.Alias), 
+					Description: 	fmt.Sprintf("Creating index %[1]s", mapping.IndexName()),
 				}
 }
 
-func createSearchTable() []SQLRunner {
-	statements := make([]SQLRunner, 0)
-	statements = append(statements, SQLRunner{sql: fmt.Sprintf("DROP TABLE IF EXISTS %s CASCADE;", form5500Search), 			description: "drop form5500_search table"})
-	statements = append(statements, SQLRunner{sql: fmt.Sprintf("CREATE TABLE %s (%s);", form5500Search, tableColumns()), 	description: "create form5500_search table"})
+func createSearchTable() []utils.SQLRunner {
+	statements := make([]utils.SQLRunner, 0)
+	statements = append(statements, utils.SQLRunner{Sql: fmt.Sprintf("DROP TABLE IF EXISTS %s CASCADE;", form5500Search), 			Description: "drop form5500_search table"})
+	statements = append(statements, utils.SQLRunner{Sql: fmt.Sprintf("CREATE TABLE %s (%s);", form5500Search, tableColumns()), 	Description: "create form5500_search table"})
 	return statements
 }
 

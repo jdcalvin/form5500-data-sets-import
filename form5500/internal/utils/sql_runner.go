@@ -1,4 +1,4 @@
-package main
+package utils
 
 import (
   "database/sql"
@@ -35,32 +35,32 @@ func CloseDBConnection() {
 
 // SQLRunner struct to assign and call sql statements throughout the form5500 package
 type SQLRunner struct {
-  sql  string
-  description string
+  Sql  string
+  Description string
 }
 
 // Exec runs #sql statement and prints description to command line
 func (s SQLRunner) Exec() {
   s.Print()
-  _, err := db.Exec(s.sql)
+  _, err := db.Exec(s.Sql)
   if err != nil {
     fmt.Println(s)
     log.Fatal(err)
   }
 }
-// ExecCopy uses psql command line tool to copy data from a csv file
+// ExecCLI uses psql command line tool to copy data from a csv file
 // Cannot use Exec due to permissions error on aws box
-func (s SQLRunner) ExecCopy() {
+func (s SQLRunner) ExecCLI() {
   s.Print()
-	cmd := exec.Command("psql", dbConnection, "-c", s.sql)
+	cmd := exec.Command("psql", dbConnection, "-c", s.Sql)
 	_, err := cmd.Output()
 	if err != nil {
-    fmt.Println("psql \"" + dbConnection + "\" -c \"" + s.sql + "\"")
+    fmt.Println("psql \"" + dbConnection + "\" -c \"" + s.Sql + "\"")
 	  log.Fatal(err)
   }
 }
 
 // Print print formatted message to console
 func (s SQLRunner) Print() {
-  fmt.Println(fmt.Sprintf(" - %s", s.description))
+  fmt.Println(fmt.Sprintf(" - %s", s.Description))
 }

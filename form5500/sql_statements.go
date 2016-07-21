@@ -2,50 +2,43 @@ package main
 
 import (
 	"fmt"
-  utils "github.com/jdcalvin/form5500-data-sets-import/form5500/internal/utils"
+   utils "github.com/jdcalvin/form5500-data-sets-import/form5500/internal/utils"
 )
 
-func updateFromSchedules(section string, year string) []SQLRunner {
-	var executableStatements = []SQLRunner{
+func updateFromSchedules(section string, year string) []utils.SQLRunner {
+	var executableStatements = []utils.SQLRunner{
 		{
-      sql: updateFromScheduleH(section, year),
-      description: fmt.Sprintf("Add info from schedule H %s", year),
+      Sql: updateFromScheduleH(section, year),
+      Description: fmt.Sprintf("Add info from schedule H %s", year),
     },
 		{
-      sql: updateFromScheduleI(section, year), 
-      description: fmt.Sprintf("Add info from schedule I %s", year),
+      Sql: updateFromScheduleI(section, year), 
+      Description: fmt.Sprintf("Add info from schedule I %s", year),
     },
 		{
-      sql: updateProviderFromScheduleCItem2(section, year, "rk", "'15','23', '60'"),
-      description: fmt.Sprintf("Determining Recordkeeper from schedule C item 2 %s", year),
+      Sql: updateProviderFromScheduleCItem2(section, year, "rk", "'15','23', '60'"),
+      Description: fmt.Sprintf("Determining Recordkeeper from schedule C item 2 %s", year),
     },
 		{
-      sql: updateProviderFromScheduleCItem3(section, year, "rk", "'15','23', '60'"),
-      description: fmt.Sprintf("Determining Recordkeeper from schedule C item 3 %s", year),
+      Sql: updateProviderFromScheduleCItem3(section, year, "rk", "'15','23', '60'"),
+      Description: fmt.Sprintf("Determining Recordkeeper from schedule C item 3 %s", year),
     },
 		{
-      sql: updateProviderFromScheduleCItem2(section, year, "advisor", "'26','27'"),
-      description: fmt.Sprintf("Determining Advisor from schedule C item 2 %s", year),
+      Sql: updateProviderFromScheduleCItem2(section, year, "advisor", "'26','27'"),
+      Description: fmt.Sprintf("Determining Advisor from schedule C item 2 %s", year),
     },
 		{
-      sql: updateProviderFromScheduleCItem3(section, year, "advisor", "'26','27'"),
-      description: fmt.Sprintf("Determining Advisor from schedule C item 2 %s", year),
+      Sql: updateProviderFromScheduleCItem3(section, year, "advisor", "'26','27'"),
+      Description: fmt.Sprintf("Determining Advisor from schedule C item 2 %s", year),
     },
 	}
 	return executableStatements
 }
 
-func createMaterializedView() SQLRunner {
-	return SQLRunner{
-    sql: utils.ReadFile("sql/form5500_search_view/create_view.sql"),
-    description: "Creating materialized view form5500_search_view", 
-  }
-}
-
-func createZipCodeSearchFunction() SQLRunner {
-  return SQLRunner{
-    sql:          utils.ReadFile("sql/zip_codes/create_search_function.sql"),
-    description:  "Create zip code search function",
+func createMaterializedView() utils.SQLRunner {
+	return utils.SQLRunner{
+    Sql: utils.ReadFile("sql/form5500_search_view/create_view.sql"),
+    Description: "Creating materialized view form5500_search_view", 
   }
 }
 

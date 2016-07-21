@@ -34,18 +34,20 @@ func main() {
 	form5500Flag.Years = strings.Split(*yearsFlag, ",")
 	form5500Flag.SetConnection(*hostFlag, *portFlag, *dbFlag, *sslFlag, *userFlag, *passwordFlag)
 
+	utils.SetDBConnection(form5500Flag.Connection)
+	utils.OpenDBConnection()
+	defer utils.CloseDBConnection()
+
 	if *isImportFlag {
-		for _, year := range form5500Flag.Years {
-			runImport(form5500Flag.Connection, year, form5500Flag.Section)
-		}
+		runImport(form5500Flag.Section, form5500Flag.Years)
 	}
 
 	if *isBuildFlag {
-		buildTable(form5500Flag.Connection, form5500Flag.Section, form5500Flag.Years)
+		buildTable(form5500Flag.Section, form5500Flag.Years)
 	}
 
 	if *isExtensionFlag != "" {
-		callExtension(form5500Flag.Connection, *isExtensionFlag)
-}
+		callExtension(*isExtensionFlag)
+	}
 
 }

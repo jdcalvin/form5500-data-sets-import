@@ -24,10 +24,10 @@ func ExampleSelectShortFormTable() {
 
 func ExampleCreateSearchTable() {
   s := createSearchTable()
-  fmt.Println(s[0].description)
-  fmt.Println(s[0].sql)
-  fmt.Println(s[1].description)
-  fmt.Println(s[1].sql)
+  fmt.Println(s[0].Description)
+  fmt.Println(s[0].Sql)
+  fmt.Println(s[1].Description)
+  fmt.Println(s[1].Sql)
   // Output: 
   // drop form5500_search table
   // DROP TABLE IF EXISTS form_5500_search CASCADE;

@@ -3,7 +3,6 @@ package main
 import (
 	"archive/zip"
 	"bufio"
-	"database/sql"
 	"errors"
 	"fmt"
 	_ "github.com/lib/pq"
@@ -12,26 +11,24 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"os/exec"
 	"strings"
+	utils "github.com/jdcalvin/form5500-data-sets-import/form5500/internal/utils"
 )
 
-const baseUrl string = "http://askebsa.dol.gov/FOIA%20Files/"
+const baseURL string = "http://askebsa.dol.gov/FOIA%20Files/"
 
-func runImport(connection string, year string, section string) {
-	db, err := sql.Open("postgres", connection)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	for _, name := range tableNames() {
-		tableName, err := createTable(db, name, year, section)
-		if err != nil {
-			log.Fatal(err)
+func runImport(section string, years []string) {
+	for _, year := range years {
+			createAndPopulateTables(year, section)
 		}
-		fmt.Println("Created table: " + tableName)
+	
+}
 
+func createAndPopulateTables(year string, section string) {
+	for _, name := range tableNames() {
+		tableName := fmt.Sprintf(name, year, section)
+		createTable(tableName, year, section).Exec()
+		
 		csvFilename, err := downloadCSV(name, year, section)
 		if err != nil {
 			log.Fatal(err)
@@ -39,7 +36,7 @@ func runImport(connection string, year string, section string) {
 		defer os.Remove(csvFilename)
 		fmt.Println("Created CSV file: " + csvFilename)
 
-		err = importCSV(connection, tableName, csvFilename)
+		importCSV(tableName, csvFilename)
 	}
 }
 
@@ -84,31 +81,25 @@ func tableNames() []string {
 	return tables
 }
 
-func importCSV(connection string, tableName string, csvFilename string) error {
-	s := fmt.Sprintf(`TRUNCATE %s`, tableName)
-	fmt.Println(fmt.Sprintf(`psql %q -c %q`, connection, s))
-  
-	cmd := exec.Command("psql", connection, "-c", s)
-	output, err := cmd.Output()
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(output))
+func importCSV(tableName string, csvFilename string) {
+	truncateTable := utils.SQLRunner{
+			Sql: fmt.Sprintf("TRUNCATE %s", tableName),
+			Description: fmt.Sprintf("Truncating %s", tableName),
+		}
+	
+	truncateTable.Exec()
+	
+	copyCsv := utils.SQLRunner {
+			Sql: fmt.Sprintf(`\copy %s FROM '%s' DELIMITER ',' CSV HEADER`, tableName, csvFilename),
+			Description: fmt.Sprintf("Copying %s into %s", csvFilename, tableName), 
+		}
 
-	s = fmt.Sprintf(`\copy %s FROM '%s' DELIMITER ',' CSV HEADER`, tableName, csvFilename)
-	fmt.Println("psql \"" + connection + "\" -c \"" + s + "\"")
-	cmd = exec.Command("psql", connection, "-c", s)
-	output, err = cmd.Output()
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(output))
-	return nil
+	copyCsv.ExecCLI()
 }
 
 func downloadCSV(name string, year string, section string) (string, error) {
 	name = fmt.Sprintf(name, year, section)
-	url := baseUrl + fmt.Sprintf("%s/%s/%s.zip", year, section, name)
+	url := baseURL + fmt.Sprintf("%s/%s/%s.zip", year, section, name)
   
   fmt.Println("Dowloading ", url)
   
@@ -152,13 +143,13 @@ func downloadCSV(name string, year string, section string) (string, error) {
 	return "", errors.New("CSV not found in ZIP file at " + url)
 }
 
-func createTable(db *sql.DB, name string, year string, section string) (string, error) {
-	tableName := fmt.Sprintf(name, year, section)
-	url := baseUrl + fmt.Sprintf("%s/%s/%s_layout.txt", year, section, tableName)
+func createTable(tableName string, year string, section string) utils.SQLRunner {
+	url := baseURL + fmt.Sprintf("%s/%s/%s_layout.txt", year, section, tableName)
   fmt.Println("Downloading ", url)
 	resp, err := http.Get(url)
 	if err != nil {
-		return "", err
+		fmt.Println("Could not resolve url: ", url)
+		log.Fatal(err)
 	}
 	defer resp.Body.Close()
 
@@ -220,12 +211,10 @@ func createTable(db *sql.DB, name string, year string, section string) (string, 
 		sql = sql + line + "\n"
 	}
 
-	_, err = db.Exec(sql)
-	if err != nil {
-		return "", err
+	return utils.SQLRunner{
+		Sql: sql,
+		Description: fmt.Sprintf("Creating table: ", tableName),
 	}
-
-	return tableName, nil
 }
 
 func downloadFile(prefix string, url string) (string, error) {

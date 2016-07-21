@@ -16,6 +16,8 @@ import (
 	"strings"
 )
 
+const baseUrl string = "http://askebsa.dol.gov/FOIA%20Files/"
+
 func runImport(connection string, year string, section string) {
 	db, err := sql.Open("postgres", connection)
 	if err != nil {

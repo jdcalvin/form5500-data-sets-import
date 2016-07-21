@@ -2,9 +2,7 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"strings"
-  "database/sql"
 	utils "github.com/jdcalvin/form5500-data-sets-import/form5500/internal/utils"
 )
 
@@ -12,26 +10,20 @@ const form5500Search string = "form_5500_search"
 
 func buildTable(connection string, section string, years []string) {
 	fmt.Println("Building form_5500_search table...")
-	db, err := sql.Open("postgres", connection)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
 
+	SetDBConnection(connection)
+	OpenDBConnection()
+	defer CloseDBConnection()
+	
 	for _, statement := range buildStatements(section, years) {
-		fmt.Println(fmt.Sprintf("  - %s", statement.description))
-		_, err = db.Exec(statement.sql)
-		if err != nil {
-      fmt.Println(statement)
-			log.Fatal(err)
-		}
+		statement.Exec()
 	}
 }
 
 //private
 
-func buildStatements(section string, years []string) []Statement {
-	executableStatements := make([]Statement, 0)
+func buildStatements(section string, years []string) []SQLRunner {
+	executableStatements := make([]SQLRunner, 0)
 
 	for _, statement := range createSearchTable() {
 		executableStatements = append(executableStatements, statement)
@@ -52,7 +44,7 @@ func buildStatements(section string, years []string) []Statement {
 	cols += "table_origin"
 
 	insertStatement := fmt.Sprintf("INSERT INTO form_5500_search (%[1]s) SELECT %[1]s FROM (\n%[2]s\n) as f_s;", cols, selectStatement)
-	executableStatements = append(executableStatements, Statement{sql: insertStatement, description: "Inserting records into form_5500_search"})
+	executableStatements = append(executableStatements, SQLRunner{sql: insertStatement, description: "Inserting records into form_5500_search"})
 
 	// - Set total assets on form_5500_search from schedule H, or I
 	// - Set providers on form_5500_search from schedule C if applicable (long form only)
@@ -64,9 +56,9 @@ func buildStatements(section string, years []string) []Statement {
 	}
 
 	// - Create materialized view form5500_search_view
-	for _, statement := range createMaterializedView() {
-		executableStatements = append(executableStatements, Statement{sql: statement, description: "Creating materialized view"})
-	}
+	
+	executableStatements = append(executableStatements, createMaterializedView())
+	
 	// - Create index for each column in form5500_search_view
 	for _, row := range utils.TableMappings() {
 		executableStatements = append(executableStatements, buildIndexStatement(row))
@@ -74,17 +66,17 @@ func buildStatements(section string, years []string) []Statement {
 	return executableStatements
 }
 
-func buildIndexStatement(mapping utils.Mapping) Statement {
-	return Statement{
+func buildIndexStatement(mapping utils.Mapping) SQLRunner {
+	return SQLRunner{
 					sql: 					fmt.Sprintf("CREATE INDEX %[1]s ON form5500_search_view (%[2]s);", mapping.IndexName(), mapping.Alias), 
 					description: 	fmt.Sprintf("Creating index %[1]s", mapping.IndexName()),
 				}
 }
 
-func createSearchTable() []Statement {
-	statements := make([]Statement, 0)
-	statements = append(statements, Statement{sql: fmt.Sprintf("DROP TABLE IF EXISTS %s CASCADE;", form5500Search), 			description: "drop form5500_search table"})
-	statements = append(statements, Statement{sql: fmt.Sprintf("CREATE TABLE %s (%s);", form5500Search, tableColumns()), 	description: "create form5500_search table"})
+func createSearchTable() []SQLRunner {
+	statements := make([]SQLRunner, 0)
+	statements = append(statements, SQLRunner{sql: fmt.Sprintf("DROP TABLE IF EXISTS %s CASCADE;", form5500Search), 			description: "drop form5500_search table"})
+	statements = append(statements, SQLRunner{sql: fmt.Sprintf("CREATE TABLE %s (%s);", form5500Search, tableColumns()), 	description: "create form5500_search table"})
 	return statements
 }
 

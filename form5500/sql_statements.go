@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
+  utils "github.com/jdcalvin/form5500-data-sets-import/form5500/internal/utils"
 )
 
-func updateFromSchedules(section string, year string) []Statement {
-	var executableStatements = []Statement{
+func updateFromSchedules(section string, year string) []SQLRunner {
+	var executableStatements = []SQLRunner{
 		{
       sql: updateFromScheduleH(section, year),
       description: fmt.Sprintf("Add info from schedule H %s", year),
@@ -34,65 +35,18 @@ func updateFromSchedules(section string, year string) []Statement {
 	return executableStatements
 }
 
-func createMaterializedView() []string {
-	var executableStatements = []string{
-		"DROP MATERIALIZED VIEW IF EXISTS form5500_search_view;",
-		`CREATE MATERIALIZED VIEW form5500_search_view AS
-  		SELECT *, to_tsvector(sponsor_name) || to_tsvector(sponsor_ein)
-   			as sponsor_search
-  		FROM (SELECT DISTINCT ON (plan_num, sponsor_ein) * FROM form_5500_search ORDER BY plan_num, sponsor_ein, date_received DESC) as foo;`,
-		"CREATE INDEX idx_fts_sponsor ON form5500_search_view USING gin(sponsor_search);",
-	}
-	return executableStatements
+func createMaterializedView() SQLRunner {
+	return SQLRunner{
+    sql: utils.ReadFile("sql/form5500_search_view/create_view.sql"),
+    description: "Creating materialized view form5500_search_view", 
+  }
 }
 
-func createZipCodesTable() []string {
-  var executableStatements = []string {
-    "DROP TABLE IF EXISTS zip_codes",
-    `CREATE TABLE zip_codes (
-      zip integer,
-      city varchar(256),
-      state varchar(2),
-      latitude double precision,
-      longitude double precision,
-      timezone integer,
-      dst integer
-    )`,
+func createZipCodeSearchFunction() SQLRunner {
+  return SQLRunner{
+    sql:          utils.ReadFile("sql/zip_codes/create_search_function.sql"),
+    description:  "Create zip code search function",
   }
-  return executableStatements
-}
-
-func createZipCodeSearchFunction() []string {
-  // This may need to be installed from some other source on the server
-  var executableStatements= []string {
-    "CREATE EXTENSION IF NOT EXISTS cube",
-    "CREATE EXTENSION IF NOT EXISTS earthdistance",
-    `DROP FUNCTION IF EXISTS udf_distance_in_miles_from_zip(_miles integer, _zip integer);
-    CREATE OR REPLACE FUNCTION udf_distance_in_miles_from_zip(_miles integer, _zip integer)
-      RETURNS table (
-        zip integer,
-        city varchar(256),
-        state varchar(2),
-        latitude double precision,
-        longitude double precision,
-        distance double precision
-      ) AS
-      $$
-        DECLARE
-          _lon double precision;
-          _lat double precision;
-        BEGIN
-          _lon := (SELECT zip_codes.longitude FROM zip_codes WHERE zip_codes.zip = _zip);
-          _lat := (SELECT zip_codes.latitude FROM zip_codes WHERE zip_codes.zip = _zip);
-          RETURN QUERY
-          SELECT zip_codes.zip, zip_codes.state, zip_codes.city, zip_codes.latitude, zip_codes.longitude,
-            point(_lon, _lat) <@> point(zip_codes.longitude, zip_codes.latitude)::point as distance FROM zip_codes
-            WHERE (point(_lon, _lat) <@> point(zip_codes.longitude, zip_codes.latitude) < _miles);
-        END
-      $$
-    LANGUAGE 'plpgsql' STABLE;`,
-  }
-  return executableStatements
 }
 
 //private
@@ -178,4 +132,9 @@ func updateProviderFromScheduleCItem3(section string, year string, provider stri
 	selectStatement = fmt.Sprintf(selectStatement, name, ein, scheduleTable, joinField, codeTable, joinField2, whereClause)
 
 	return fmt.Sprintf("UPDATE form_5500_search as f SET %[3]s_name=foo_1.%[1]s FROM (%[2]s) as foo_1 WHERE foo_1.ack_id=f.ack_id", name, selectStatement, provider)
+}
+
+func createScheduleCProvider() string {
+  s := utils.ReadFile("sql/schedule_c_providers/create_table.sql")
+  return s
 }

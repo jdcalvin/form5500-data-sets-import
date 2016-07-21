@@ -4,9 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"strings"
+	utils "github.com/jdcalvin/form5500-data-sets-import/form5500/internal/utils"
 )
-
-const baseUrl string = "http://askebsa.dol.gov/FOIA%20Files/"
 
 var hostFlag = flag.String("host", "localhost", "connection host")
 var portFlag = flag.String("port", "5432", "connection port")
@@ -29,40 +28,24 @@ func main() {
 		fmt.Println("Must specify import, build, or an extension")
 	}
 
-	var connectionPartial string
-	fmt.Println(*userFlag)
-	if *userFlag != "" && *passwordFlag != "" {
-		connectionPartial = fmt.Sprintf("user=%s password=%s ", *userFlag, *passwordFlag)
-	} else {
-		connectionPartial = ""
-	}
+	form5500Flag := new(utils.Form5500Flags)
 
-	var sslMode string
-
-	if *sslFlag {
-		sslMode = "enable"
-	} else {
-		sslMode = "disable"
-	}
-
-	years := strings.Split(*yearsFlag, ",")
-
-	section := *sectionFlag
-
-	connection := fmt.Sprintf("host=%s port=%s dbname=%s sslmode=%s %s", *hostFlag, *portFlag, *dbFlag, sslMode, connectionPartial)
+	form5500Flag.Section = *sectionFlag
+	form5500Flag.Years = strings.Split(*yearsFlag, ",")
+	form5500Flag.SetConnection(*hostFlag, *portFlag, *dbFlag, *sslFlag, *userFlag, *passwordFlag)
 
 	if *isImportFlag {
-		for _, year := range years {
-			runImport(connection, year, section)
+		for _, year := range form5500Flag.Years {
+			runImport(form5500Flag.Connection, year, form5500Flag.Section)
 		}
 	}
 
 	if *isBuildFlag {
-		buildTable(connection, section, years)
+		buildTable(form5500Flag.Connection, form5500Flag.Section, form5500Flag.Years)
 	}
 
 	if *isExtensionFlag != "" {
-		callExtension(connection, *isExtensionFlag)
-	}
+		callExtension(form5500Flag.Connection, *isExtensionFlag)
+}
 
 }

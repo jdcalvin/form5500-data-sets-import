@@ -3,24 +3,41 @@ package main
 import (
 	"fmt"
 	"log"
-  "database/sql"
   "os"
   "net/http"
   "strings"
   "path/filepath"
   "io"
-	"os/exec"
+	utils "github.com/jdcalvin/form5500-data-sets-import/form5500/internal/utils"
 )
 
 func callExtension(connection string, extension string) {
-	db, err := sql.Open("postgres", connection)
-	if err != nil {
-		log.Fatal(err)
-	}
+	SetDBConnection(connection)
+	OpenDBConnection()
+	defer CloseDBConnection()
 
 	if (extension == "zip_codes") {
 		fmt.Println("Adding zip codes extension")
-		zipCodeSearchable(db, connection)
+		createZipCodeTable := SQLRunner{
+														sql:          utils.ReadFile("sql/zip_codes/create_table.sql"),
+														description:  "Create zip_codes table",
+													}
+
+		importZipCode := SQLRunner{
+												sql: fmt.Sprintf(`\copy zip_codes FROM '%s' DELIMITER ',' CSV HEADER`, downloadZipCodeCsv()),
+												description: "Importing zip codes into zip_codes table",
+											}
+
+		createZipCodeFunction := SQLRunner{
+															sql:          utils.ReadFile("sql/zip_codes/create_search_function.sql"),
+															description:  "Create zip code search function",
+														}
+
+		createZipCodeTable.Exec()
+
+		importZipCode.ExecCopy()
+		createZipCodeFunction.Exec()
+
 	} else {
 		log.Fatal("Invalid extension")
 	}
@@ -29,41 +46,6 @@ func callExtension(connection string, extension string) {
 }
 
 //private
-
-func zipCodeSearchable(db *sql.DB, connection string) error {
-	fmt.Println("  - Creating zip codes table")
-	for _, statement := range createZipCodesTable() {
-		_, err := db.Exec(statement)
-		if err != nil {
-      fmt.Println(statement)
-			log.Fatal(err)
-		}
-	}
-
-	importZipCodes(connection)
-
-	fmt.Println("  - Adding udf_distance_in_miles_from_zip(_miles integer, _zip integer)")
-	for _, statement := range createZipCodeSearchFunction() {
-		_, err := db.Exec(statement)
-		if err != nil {
-      fmt.Println(statement)
-			log.Fatal(err)
-		}
-	}
-	return nil
-}
-
-func importZipCodes(connection string) error{	
-	csvFileName := downloadZipCodeCsv()
-	s := fmt.Sprintf(`\copy zip_codes FROM '%s' DELIMITER ',' CSV HEADER`, csvFileName)
-	fmt.Println("-  Executing: psql \"" + connection + "\" -c \"" + s + "\"")
-	cmd := exec.Command("psql", connection, "-c", s)
-	_, err := cmd.Output()
-	if err != nil {
-		return err
-	}
-	return nil
-}
 
 func downloadZipCodeCsv() string {
 	url := "https://raw.githubusercontent.com/jdcalvin/form5500-data-sets-import/master/form5500/zipcode.csv"

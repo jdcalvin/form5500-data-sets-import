@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-   utils "github.com/jdcalvin/form5500-data-sets-import/internal/utils"
+   utils "github.com/jdcalvin/form5500/internal/utils"
 )
 
 func updateFromSchedules(section string, year string) []utils.SQLRunner {

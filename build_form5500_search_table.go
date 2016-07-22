@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"strings"
-	utils "github.com/jdcalvin/form5500-data-sets-import/internal/utils"
+	utils "github.com/jdcalvin/form5500/internal/utils"
 )
 
 const form5500Search string = "form_5500_search"

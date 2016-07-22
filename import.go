@@ -12,7 +12,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	utils "github.com/jdcalvin/form5500-data-sets-import/internal/utils"
+	utils "github.com/jdcalvin/form5500/internal/utils"
 )
 
 const baseURL string = "http://askebsa.dol.gov/FOIA%20Files/"

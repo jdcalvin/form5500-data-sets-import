@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"strings"
-	utils "github.com/jdcalvin/form5500-data-sets-import/internal/utils"
+	utils "github.com/jdcalvin/form5500/internal/utils"
 )
 
 var hostFlag = flag.String("host", "localhost", "connection host")

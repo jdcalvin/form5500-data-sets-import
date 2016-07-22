@@ -8,7 +8,7 @@ import (
   "strings"
   "path/filepath"
   "io"
-	utils "github.com/jdcalvin/form5500-data-sets-import/internal/utils"
+	utils "github.com/jdcalvin/form5500/internal/utils"
 )
 
 func callExtension(extension string) {

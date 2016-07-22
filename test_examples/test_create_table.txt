@@ -1,0 +1,18 @@
+DROP TABLE IF EXISTS f_sch_c_part1_item1_2013_latest CASCADE;
+CREATE TABLE f_sch_c_part1_item1_2013_latest (
+    "ACK_ID" varchar(30),
+    "ROW_ORDER" int,
+    "PROVIDER_ELIGIBLE_NAME" varchar(35),
+    "PROVIDER_ELIGIBLE_EIN" varchar(9),
+    "PROVIDER_ELIGIBLE_US_ADDRESS1" varchar(35),
+    "PROVIDER_ELIGIBLE_US_ADDRESS2" varchar(35),
+    "PROVIDER_ELIGIBLE_US_CITY" varchar(22),
+    "PROVIDER_ELIGIBLE_US_STATE" varchar(2),
+    "PROVIDER_ELIGIBLE_US_ZIP" varchar(12),
+    "PROV_ELIGIBLE_FOREIGN_ADDRESS1" varchar(35),
+    "PROV_ELIGIBLE_FOREIGN_ADDRESS2" varchar(35),
+    "PROV_ELIGIBLE_FOREIGN_CITY" varchar(22),
+    "PROV_ELIGIBLE_FOREIGN_PROV_ST" varchar(22),
+    "PROV_ELIGIBLE_FOREIGN_CNTRY" varchar(2),
+    "PROV_ELIGIBLE_FOREIGN_POST_CD" varchar(22)
+);

@@ -3,9 +3,9 @@ CLI tool to download and import the DOL Form5500 data sets into a postgres datab
 http://www.dol.gov/ebsa/foia/foia-5500.html
 
 ### Install CLI
-`go get github.com/jdcalvin/form5500-data-sets-import/form5500`
+`go get github.com/jdcalvin/form5500`
 
-`go install github.com/jdcalvin/form5500-data-sets-import/form5500`
+`go install github.com/jdcalvin/form5500`
 
 ### Usage
 ##### Download csvs and store in specified database (host, password, port are optional)

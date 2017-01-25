@@ -4,14 +4,13 @@ import (
   "fmt"
 )
 
-var port, host, dbName, user, password string
+var port, host, dbName, user, password, sslmode string
 var flagEx Form5500Flags
-var sslmode bool
 
 func setVariables() {
   host = "testhost"
   port = "5555"
-  sslmode = true
+  sslmode = "disable"
   user = ""
   password = ""
   dbName = "testdb"
@@ -25,7 +24,7 @@ func ExampleSetConnectionWithoutUserPassword() {
   flagEx.SetConnection(host,port,dbName,sslmode,user,password)
   fmt.Println(flagEx.Connection) // no user or password
   // Output:
-  // host=testhost port=5555 dbname=testdb sslmode=enable
+  // host=testhost port=5555 dbname=testdb sslmode=disable
 }
 
 func ExampleSetConnectionWithoutPassword() {
@@ -34,7 +33,7 @@ func ExampleSetConnectionWithoutPassword() {
   flagEx.SetConnection(host,port,dbName,sslmode,"testuser",password)
   fmt.Println(flagEx.Connection) // no user or password
   // Output:
-  // host=testhost port=5555 dbname=testdb sslmode=enable
+  // host=testhost port=5555 dbname=testdb sslmode=disable
 }
 
 func ExampleSetConnectionWithUserPassword() {
@@ -43,5 +42,5 @@ func ExampleSetConnectionWithUserPassword() {
   flagEx.SetConnection(host,port,dbName,sslmode,"testuser", "abc123")
   fmt.Println(flagEx.Connection) // no user or password
   // Output:
-  // host=testhost port=5555 dbname=testdb sslmode=enable user=testuser password=abc123
+  // host=testhost port=5555 dbname=testdb sslmode=disable user=testuser password=abc123
 }

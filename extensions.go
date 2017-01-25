@@ -42,7 +42,7 @@ func callExtension(extension string) {
 //private
 
 func downloadZipCodeCsv() string {
-	url := "https://raw.githubusercontent.com/jdcalvin/form5500-data-sets-import/master/form5500/zipcode.csv"
+	url := "https://raw.githubusercontent.com/jdcalvin/form5500/master/zipcode.csv"
 	tokens := strings.Split(url, "/")
 	fileName := tokens[len(tokens)-1]
 	fmt.Println("  - Downloading", url, "to", fileName)

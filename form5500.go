@@ -12,7 +12,7 @@ var portFlag = flag.String("port", "5432", "connection port")
 var userFlag = flag.String("user", "", "username (optional)")
 var passwordFlag = flag.String("password", "", "password (optional)")
 var dbFlag = flag.String("db", "", "specify existing database to store data")
-var sslFlag = flag.Bool("ssl", false, "connection sslmode enabled")
+var sslFlag = flag.String("ssl", "disable", "connection sslmode: require, verify-full, verify-ca, disable")
 
 var yearsFlag = flag.String("years", "", "Specify form5500 year")
 var sectionFlag = flag.String("section", "", "Specify form5500 section ('all' or 'latest')")
@@ -24,11 +24,11 @@ var isExtensionFlag = flag.String("extension", "", "Add extensions to ")
 func main() {
 	flag.Parse()
 
-	if (!*isImportFlag && !*isBuildFlag && (*isExtensionFlag == "") || (*isImportFlag && *isBuildFlag && (*isExtensionFlag != ""))) {
+	form5500Flag := new(utils.Form5500Flags)
+
+	if (!*isImportFlag && !*isBuildFlag && (*isExtensionFlag == "")) {
 		fmt.Println("Must specify import, build, or an extension")
 	}
-
-	form5500Flag := new(utils.Form5500Flags)
 
 	form5500Flag.Section = *sectionFlag
 	form5500Flag.Years = strings.Split(*yearsFlag, ",")

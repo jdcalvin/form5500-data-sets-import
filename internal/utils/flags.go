@@ -13,7 +13,7 @@ type Form5500Flags struct {
 }
 
 // SetConnection Set attributes from cli inputs
-func (f *Form5500Flags) SetConnection(host string, port string, db string, sslmode bool, user string, password string) {
+func (f *Form5500Flags) SetConnection(host string, port string, db string, sslmode string, user string, password string) {
 
   if db == "" {
     log.Fatal("-db flag is required")
@@ -27,13 +27,10 @@ func (f *Form5500Flags) SetConnection(host string, port string, db string, sslmo
 		connectionPartial = ""
 	}
 
-	var sslMode string
-
-	if sslmode {
-		sslMode = "enable"
-	} else {
-		sslMode = "disable"
+	
+	if !(sslmode == "require" || sslmode == "verify-full" || sslmode == "verify-ca" || sslmode == "disable") {
+		log.Fatal("-ssl only supports disable (default), 'verify-full', 'verify-ca', 'require'")
 	}
   
-  f.Connection = fmt.Sprintf("host=%s port=%s dbname=%s sslmode=%s %s", host, port, db, sslMode, connectionPartial)
+  f.Connection = fmt.Sprintf("host=%s port=%s dbname=%s sslmode=%s %s", host, port, db, sslmode, connectionPartial)
 }

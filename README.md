@@ -1,4 +1,4 @@
-# form5500-data-sets-import
+# form5500
 CLI tool to download and import the DOL Form5500 data sets into a postgres database.
 http://www.dol.gov/ebsa/foia/foia-5500.html
 

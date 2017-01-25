@@ -5,6 +5,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	utils "github.com/jdcalvin/form5500/internal/utils"
 	_ "github.com/lib/pq"
 	"io"
 	"io/ioutil"
@@ -12,23 +13,22 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	utils "github.com/jdcalvin/form5500/internal/utils"
 )
 
 const baseURL string = "http://askebsa.dol.gov/FOIA%20Files/"
 
 func runImport(section string, years []string) {
 	for _, year := range years {
-			createAndPopulateTables(year, section)
-		}
-	
+		createAndPopulateTables(year, section)
+	}
+
 }
 
 func createAndPopulateTables(year string, section string) {
 	for _, name := range tableNames() {
 		tableName := fmt.Sprintf(name, year, section)
 		createTable(tableName, year, section).Exec()
-		
+
 		csvFilename, err := downloadCSV(name, year, section)
 		if err != nil {
 			log.Fatal(err)
@@ -83,16 +83,16 @@ func tableNames() []string {
 
 func importCSV(tableName string, csvFilename string) {
 	truncateTable := utils.SQLRunner{
-			Sql: fmt.Sprintf("TRUNCATE %s", tableName),
-			Description: fmt.Sprintf("Truncating %s", tableName),
-		}
-	
+		Statement:   fmt.Sprintf("TRUNCATE %s", tableName),
+		Description: fmt.Sprintf("Truncating %s", tableName),
+	}
+
 	truncateTable.Exec()
-	
-	copyCsv := utils.SQLRunner {
-			Sql: fmt.Sprintf(`\copy %s FROM '%s' DELIMITER ',' CSV HEADER`, tableName, csvFilename),
-			Description: fmt.Sprintf("Copying %s into %s", csvFilename, tableName), 
-		}
+
+	copyCsv := utils.SQLRunner{
+		Statement:   fmt.Sprintf(`\copy %s FROM '%s' DELIMITER ',' CSV HEADER`, tableName, csvFilename),
+		Description: fmt.Sprintf("Copying %s into %s", csvFilename, tableName),
+	}
 
 	copyCsv.ExecCLI()
 }
@@ -100,9 +100,9 @@ func importCSV(tableName string, csvFilename string) {
 func downloadCSV(name string, year string, section string) (string, error) {
 	name = fmt.Sprintf(name, year, section)
 	url := baseURL + fmt.Sprintf("%s/%s/%s.zip", year, section, name)
-  
-  fmt.Println("Dowloading ", url)
-  
+
+	fmt.Println("Dowloading ", url)
+
 	zipFilename, err := downloadFile(name, url)
 	if err != nil {
 		log.Fatal(err)
@@ -145,7 +145,7 @@ func downloadCSV(name string, year string, section string) (string, error) {
 
 func createTable(tableName string, year string, section string) utils.SQLRunner {
 	url := baseURL + fmt.Sprintf("%s/%s/%s_layout.txt", year, section, tableName)
-  fmt.Println("Downloading ", url)
+	fmt.Println("Downloading ", url)
 	resp, err := http.Get(url)
 	if err != nil {
 		fmt.Println("Could not resolve url: ", url)
@@ -159,7 +159,7 @@ func createTable(tableName string, year string, section string) utils.SQLRunner 
 	scanner.Scan()
 	scanner.Scan()
 
-	sqlLines := make([]string, 0)
+	var sqlLines []string
 	sqlLines = append(sqlLines, fmt.Sprintf("DROP TABLE IF EXISTS %s CASCADE;", tableName))
 	sqlLines = append(sqlLines, fmt.Sprintf("CREATE TABLE %s (", tableName))
 
@@ -212,7 +212,7 @@ func createTable(tableName string, year string, section string) utils.SQLRunner 
 	}
 
 	return utils.SQLRunner{
-		Sql: sql,
+		Statement:   sql,
 		Description: fmt.Sprintf("Creating table: %s", tableName),
 	}
 }

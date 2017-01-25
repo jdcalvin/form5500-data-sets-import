@@ -55,3 +55,12 @@ SELECT * FROM form5500_search_view WHERE substring(sponsor_zip,1,5)::int IN (sel
 build `go build ./form5500`
 
 test `go test ./form5500/...`
+
+### Rebuilding sql files
+Install go-bindata https://github.com/jteeuwen/go-bindata
+
+`go get -u github.com/jteeuwen/go-bindata/...`
+
+Run command to create bindata.go file in internal/utils:
+
+`go-bindata -o internal/utils/bindata.go  -pkg utils sql/...`

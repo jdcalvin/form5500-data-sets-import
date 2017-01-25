@@ -38,6 +38,7 @@ func main() {
 	utils.OpenDBConnection()
 	defer utils.CloseDBConnection()
 
+	
 	if *isImportFlag {
 		runImport(form5500Flag.Section, form5500Flag.Years)
 	}

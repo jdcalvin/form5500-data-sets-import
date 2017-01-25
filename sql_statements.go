@@ -2,44 +2,44 @@ package main
 
 import (
 	"fmt"
-   utils "github.com/jdcalvin/form5500/internal/utils"
+	utils "github.com/jdcalvin/form5500/internal/utils"
 )
 
 func updateFromSchedules(section string, year string) []utils.SQLRunner {
 	var executableStatements = []utils.SQLRunner{
 		{
-      Sql: updateFromScheduleH(section, year),
-      Description: fmt.Sprintf("Add info from schedule H %s", year),
-    },
+			Statement:   updateFromScheduleH(section, year),
+			Description: fmt.Sprintf("Add info from schedule H %s", year),
+		},
 		{
-      Sql: updateFromScheduleI(section, year), 
-      Description: fmt.Sprintf("Add info from schedule I %s", year),
-    },
+			Statement:   updateFromScheduleI(section, year),
+			Description: fmt.Sprintf("Add info from schedule I %s", year),
+		},
 		{
-      Sql: updateProviderFromScheduleCItem2(section, year, "rk", "'15','23', '60'"),
-      Description: fmt.Sprintf("Determining Recordkeeper from schedule C item 2 %s", year),
-    },
+			Statement:   updateProviderFromScheduleCItem2(section, year, "rk", "'15','23', '60'"),
+			Description: fmt.Sprintf("Determining Recordkeeper from schedule C item 2 %s", year),
+		},
 		{
-      Sql: updateProviderFromScheduleCItem3(section, year, "rk", "'15','23', '60'"),
-      Description: fmt.Sprintf("Determining Recordkeeper from schedule C item 3 %s", year),
-    },
+			Statement:   updateProviderFromScheduleCItem3(section, year, "rk", "'15','23', '60'"),
+			Description: fmt.Sprintf("Determining Recordkeeper from schedule C item 3 %s", year),
+		},
 		{
-      Sql: updateProviderFromScheduleCItem2(section, year, "advisor", "'26','27'"),
-      Description: fmt.Sprintf("Determining Advisor from schedule C item 2 %s", year),
-    },
+			Statement:   updateProviderFromScheduleCItem2(section, year, "advisor", "'26','27'"),
+			Description: fmt.Sprintf("Determining Advisor from schedule C item 2 %s", year),
+		},
 		{
-      Sql: updateProviderFromScheduleCItem3(section, year, "advisor", "'26','27'"),
-      Description: fmt.Sprintf("Determining Advisor from schedule C item 2 %s", year),
-    },
+			Statement:   updateProviderFromScheduleCItem3(section, year, "advisor", "'26','27'"),
+			Description: fmt.Sprintf("Determining Advisor from schedule C item 2 %s", year),
+		},
 	}
 	return executableStatements
 }
 
 func createMaterializedView() utils.SQLRunner {
 	return utils.SQLRunner{
-    Sql: utils.ReadFile("sql/form5500_search_view/create_view.sql"),
-    Description: "Creating materialized view form5500_search_view", 
-  }
+		Statement:   utils.ReadAsset("sql/form5500_search_view/create_view.sql"),
+		Description: "Creating materialized view form5500_search_view",
+	}
 }
 
 //private
@@ -47,13 +47,12 @@ func createMaterializedView() utils.SQLRunner {
 func updateFromScheduleH(section string, year string) string {
 	joinField := "\"ACK_ID\""
 
-
 	scheduleTable := fmt.Sprintf("f_sch_h_%s_%s", year, section)
 
 	selectStatement := fmt.Sprintf("SELECT * FROM form_5500_search  JOIN %[3]s ON %[3]s.%[4]s = form_5500_search.ack_id", year, section, scheduleTable, joinField)
 
-  // cast numeric value from investment types to a boolean true or NULL
-  updateStatement := `
+	// cast numeric value from investment types to a boolean true or NULL
+	updateStatement := `
     UPDATE form_5500_search as f 
       SET total_assets = "TOT_ASSETS_EOY_AMT",
           inv_collective_trusts = NULLIF(substring(abs("INT_COMMON_TR_EOY_AMT")::varchar, 1,1),'')::int::boolean,
@@ -128,6 +127,6 @@ func updateProviderFromScheduleCItem3(section string, year string, provider stri
 }
 
 func createScheduleCProvider() string {
-  s := utils.ReadFile("sql/schedule_c_providers/create_table.sql")
-  return s
+	s := utils.ReadAsset("sql/schedule_c_providers/create_table.sql")
+	return s
 }

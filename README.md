@@ -63,4 +63,4 @@ Install go-bindata https://github.com/jteeuwen/go-bindata
 
 Run command to create bindata.go file in internal/utils:
 
-`go-bindata -o internal/utils/bindata.go  -pkg utils sql/...`
+`go-bindata -o internal/utils/bindata.go  -pkg utils assets/...`

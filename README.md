@@ -13,7 +13,7 @@ http://www.dol.gov/ebsa/foia/foia-5500.html
   `form5500 -import -db $DB_NAME -host $HOST -user $USER -password $DB_PASSWORD  -port 5432 -section latest -years 2013,2014,2015`
   
 ##### Parse imported data from specified years and aggregate into form5500_search table 
-  `form5500 -build`
+  `form5500 -build -section latest -years 2013,2014,2015`
   
 ##### Options
 ```

@@ -54,6 +54,12 @@ func TableMappings() []Mapping {
 			DataType:  "text",
 		},
 		{
+			LongForm:  "\"SPONS_SIGNED_NAME\"",
+			ShortForm: "\"SF_SPONS_SIGNED_NAME\"",
+			Alias:     "sponsor_signed_name",
+			DataType:  "text",
+		},
+		{
 			LongForm:  "\"SPONS_DFE_MAIL_US_ADDRESS1\"",
 			ShortForm: "\"SF_SPONS_US_ADDRESS1\"",
 			Alias:     "sponsor_address_1",
@@ -111,6 +117,12 @@ func TableMappings() []Mapping {
 			LongForm:  "\"ADMIN_NAME\"",
 			ShortForm: "\"SF_ADMIN_NAME\"",
 			Alias:     "admin_name",
+			DataType:  "text",
+		},
+		{
+			LongForm:  "\"ADMIN_SIGNED_NAME\"",
+			ShortForm: "\"SF_ADMIN_SIGNED_NAME\"",
+			Alias:     "admin_signed_name",
 			DataType:  "text",
 		},
 		{

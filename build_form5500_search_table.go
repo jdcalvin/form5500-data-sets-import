@@ -3,7 +3,8 @@ package main
 import (
 	"fmt"
 	"strings"
-	utils "github.com/jdcalvin/form5500/internal/utils"
+
+	utils "github.com/fiduciary-benchmarks/form5500/internal/utils"
 )
 
 const form5500Search string = "form_5500_search"
@@ -53,9 +54,9 @@ func buildStatements(section string, years []string) []utils.SQLRunner {
 	}
 
 	// - Create materialized view form5500_search_view
-	
+
 	executableStatements = append(executableStatements, createMaterializedView())
-	
+
 	// - Create index for each column in form5500_search_view
 	for _, row := range utils.TableMappings() {
 		executableStatements = append(executableStatements, buildIndexStatement(row))
@@ -65,15 +66,15 @@ func buildStatements(section string, years []string) []utils.SQLRunner {
 
 func buildIndexStatement(mapping utils.Mapping) utils.SQLRunner {
 	return utils.SQLRunner{
-					Statement: 					fmt.Sprintf("CREATE INDEX %[1]s ON form5500_search_view (%[2]s);", mapping.IndexName(), mapping.Alias), 
-					Description: 	fmt.Sprintf("Creating index %[1]s", mapping.IndexName()),
-				}
+		Statement:   fmt.Sprintf("CREATE INDEX %[1]s ON form5500_search_view (%[2]s);", mapping.IndexName(), mapping.Alias),
+		Description: fmt.Sprintf("Creating index %[1]s", mapping.IndexName()),
+	}
 }
 
 func createSearchTable() []utils.SQLRunner {
 	var statements []utils.SQLRunner
-	statements = append(statements, utils.SQLRunner{Statement: fmt.Sprintf("DROP TABLE IF EXISTS %s CASCADE;", form5500Search), 			Description: "drop form5500_search table"})
-	statements = append(statements, utils.SQLRunner{Statement: fmt.Sprintf("CREATE TABLE %s (%s);", form5500Search, tableColumns()), 	Description: "create form5500_search table"})
+	statements = append(statements, utils.SQLRunner{Statement: fmt.Sprintf("DROP TABLE IF EXISTS %s CASCADE;", form5500Search), Description: "drop form5500_search table"})
+	statements = append(statements, utils.SQLRunner{Statement: fmt.Sprintf("CREATE TABLE %s (%s);", form5500Search, tableColumns()), Description: "create form5500_search table"})
 	return statements
 }
 

@@ -5,14 +5,15 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	utils "github.com/jdcalvin/form5500/internal/utils"
-	_ "github.com/lib/pq"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"strings"
+
+	utils "github.com/fiduciary-benchmarks/form5500/internal/utils"
+	_ "github.com/lib/pq"
 )
 
 const baseURL string = "http://askebsa.dol.gov/FOIA%20Files/"

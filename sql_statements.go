@@ -2,7 +2,8 @@ package main
 
 import (
 	"fmt"
-	utils "github.com/jdcalvin/form5500/internal/utils"
+
+	utils "github.com/fiduciary-benchmarks/form5500/internal/utils"
 )
 
 func updateFromSchedules(section string, year string) []utils.SQLRunner {

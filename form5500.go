@@ -4,7 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"strings"
-	utils "github.com/jdcalvin/form5500/internal/utils"
+
+	utils "github.com/fiduciary-benchmarks/form5500/internal/utils"
 )
 
 var hostFlag = flag.String("host", "localhost", "connection host")
@@ -26,7 +27,7 @@ func main() {
 
 	form5500Flag := new(utils.Form5500Flags)
 
-	if (!*isImportFlag && !*isBuildFlag && (*isExtensionFlag == "")) {
+	if !*isImportFlag && !*isBuildFlag && (*isExtensionFlag == "") {
 		fmt.Println("Must specify import, build, or an extension")
 	}
 
@@ -38,7 +39,6 @@ func main() {
 	utils.OpenDBConnection()
 	defer utils.CloseDBConnection()
 
-	
 	if *isImportFlag {
 		runImport(form5500Flag.Section, form5500Flag.Years)
 	}

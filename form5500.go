@@ -1,11 +1,13 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
+	"log"
 	"strings"
 
-	utils "github.com/fiduciary-benchmarks/form5500/internal/utils"
+	"github.com/fiduciary-benchmarks/form5500/internal/utils"
 )
 
 var hostFlag = flag.String("host", "localhost", "connection host")
@@ -21,6 +23,8 @@ var sectionFlag = flag.String("section", "", "Specify form5500 section ('all' or
 var isImportFlag = flag.Bool("import", false, "Download csvs into database")
 var isBuildFlag = flag.Bool("build", false, "Builds form5500_search table from all long form and short form form5500 tables")
 var isExtensionFlag = flag.String("extension", "", "Add extensions to ")
+var outputJSONFlag = flag.Bool("output-json", false, "Return result of import process as JSON. Defaults to false.")
+var debugMode = flag.Bool("debug", false, "Output verbose log of import. Defaults to false.")
 
 func main() {
 	flag.Parse()
@@ -39,8 +43,17 @@ func main() {
 	utils.OpenDBConnection()
 	defer utils.CloseDBConnection()
 
+	var results []ImportResult
+	var err error
+
 	if *isImportFlag {
-		runImport(form5500Flag.Section, form5500Flag.Years)
+		results, err = runImport(form5500Flag.Section, form5500Flag.Years)
+
+		if err != nil {
+			log.Println(err.Error())
+			utils.CloseDBConnection()
+			results = append(results, buildErrorResult("", "", "", err))
+		}
 	}
 
 	if *isBuildFlag {
@@ -51,4 +64,11 @@ func main() {
 		callExtension(*isExtensionFlag)
 	}
 
+	// Return a JSON string so that it can be parsed by a receiving application.
+	// Idea was borrowed from AWS CLI commands that can generate a JSON skeleton and
+	// other output to be piped to other applications.
+	if results != nil && *outputJSONFlag {
+		jByte, _ := json.Marshal(results)
+		fmt.Println(string(jByte))
+	}
 }

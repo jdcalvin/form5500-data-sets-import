@@ -38,7 +38,6 @@ func runImport(section string, years []string) ([]ImportResult, error) {
 	}
 
 	return results, nil
-
 }
 
 func createAndPopulateTables(year string, section string) []ImportResult {

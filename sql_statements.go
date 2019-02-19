@@ -6,7 +6,7 @@ import (
 	utils "github.com/fiduciary-benchmarks/form5500/internal/utils"
 )
 
-func updateFromSchedules(section string, year string) []utils.SQLRunner {
+func getUpdateFromSchedulesStatements(section string, year string) []utils.SQLRunner {
 	var executableStatements = []utils.SQLRunner{
 		{
 			Statement:   updateFromScheduleH(section, year),
@@ -36,7 +36,7 @@ func updateFromSchedules(section string, year string) []utils.SQLRunner {
 	return executableStatements
 }
 
-func createMaterializedView() utils.SQLRunner {
+func getCreateMaterializedViewStatement() utils.SQLRunner {
 	return utils.SQLRunner{
 		Statement:   utils.ReadAsset("sql/form5500_search_view/create_view.sql"),
 		Description: "Creating materialized view form5500_search_view",
@@ -54,7 +54,7 @@ func updateFromScheduleH(section string, year string) string {
 
 	// cast numeric value from investment types to a boolean true or NULL
 	updateStatement := `
-    UPDATE form_5500_search as f 
+    UPDATE form_5500_search as f
       SET total_assets = "TOT_ASSETS_EOY_AMT",
           inv_collective_trusts = NULLIF(substring(abs("INT_COMMON_TR_EOY_AMT")::varchar, 1,1),'')::int::boolean,
           inv_separate_accounts = NULLIF(substring(abs("INT_POOL_SEP_ACCT_EOY_AMT")::varchar, 1,1),'')::int::boolean,
@@ -92,11 +92,11 @@ func updateProviderFromScheduleCItem2(section string, year string, provider stri
 
 	codeTable := fmt.Sprintf("f_sch_c_part1_item2_codes_%s_%s", year, section)
 
-	selectStatement := `SELECT ack_id, %[1]s, %[2]s FROM form_5500_search 
+	selectStatement := `SELECT ack_id, %[1]s, %[2]s FROM form_5500_search
     JOIN %[3]s ON %[3]s.%[4]s = form_5500_search.ack_id
     -- codeTable.ack_id=scheduleTable.ack_id AND codeTable.row_order=scheduleTable.row_order
     JOIN %[5]s ON %[5]s.%[4]s = %[3]s.%[4]s AND %[5]s.%[6]s = %[3]s.%[6]s
-    WHERE %[7]s 
+    WHERE %[7]s
   `
 	selectStatement = fmt.Sprintf(selectStatement, name, ein, scheduleTable, joinField, codeTable, joinField2, whereClause)
 
@@ -116,11 +116,11 @@ func updateProviderFromScheduleCItem3(section string, year string, provider stri
 
 	codeTable := fmt.Sprintf("f_sch_c_part1_item3_codes_%s_%s", year, section)
 
-	selectStatement := `SELECT ack_id, %[1]s FROM form_5500_search 
+	selectStatement := `SELECT ack_id, %[1]s FROM form_5500_search
     JOIN %[3]s ON %[3]s.%[4]s = form_5500_search.ack_id
     -- codeTable.ack_id=scheduleTable.ack_id AND codeTable.row_order=scheduleTable.row_order
     JOIN %[5]s ON %[5]s.%[4]s = %[3]s.%[4]s AND %[5]s.%[6]s = %[3]s.%[6]s
-    WHERE %[7]s 
+    WHERE %[7]s
   `
 	selectStatement = fmt.Sprintf(selectStatement, name, ein, scheduleTable, joinField, codeTable, joinField2, whereClause)
 

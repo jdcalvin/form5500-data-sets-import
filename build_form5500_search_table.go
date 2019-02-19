@@ -9,20 +9,20 @@ import (
 
 const form5500Search string = "form_5500_search"
 
-func buildTable(section string, years []string) {
+func rebuildSearchTable(section string, years []string) {
 	fmt.Println("Building form_5500_search table...")
 
-	for _, statement := range buildStatements(section, years) {
+	for _, statement := range getRebuildStatements(section, years) {
 		statement.Exec()
 	}
 }
 
 //private
 
-func buildStatements(section string, years []string) []utils.SQLRunner {
+func getRebuildStatements(section string, years []string) []utils.SQLRunner {
 	var executableStatements []utils.SQLRunner
 
-	for _, statement := range createSearchTable() {
+	for _, statement := range getDropAndCreateSearchTableStatements() {
 		executableStatements = append(executableStatements, statement)
 	}
 
@@ -48,37 +48,37 @@ func buildStatements(section string, years []string) []utils.SQLRunner {
 	// - Set providers on form_5500_search from schedule C if applicable (long form only)
 	//   based on service codes http://freeerisa.benefitspro.com/static/popups/legends.aspx#5500c09
 	for _, year := range years {
-		for _, statement := range updateFromSchedules(section, year) {
+		for _, statement := range getUpdateFromSchedulesStatements(section, year) {
 			executableStatements = append(executableStatements, statement)
 		}
 	}
 
 	// - Create materialized view form5500_search_view
 
-	executableStatements = append(executableStatements, createMaterializedView())
+	executableStatements = append(executableStatements, getCreateMaterializedViewStatement())
 
 	// - Create index for each column in form5500_search_view
 	for _, row := range utils.TableMappings() {
-		executableStatements = append(executableStatements, buildIndexStatement(row))
+		executableStatements = append(executableStatements, getCreateIndexStatement(row))
 	}
 	return executableStatements
 }
 
-func buildIndexStatement(mapping utils.Mapping) utils.SQLRunner {
+func getCreateIndexStatement(mapping utils.Mapping) utils.SQLRunner {
 	return utils.SQLRunner{
 		Statement:   fmt.Sprintf("CREATE INDEX %[1]s ON form5500_search_view (%[2]s);", mapping.IndexName(), mapping.Alias),
 		Description: fmt.Sprintf("Creating index %[1]s", mapping.IndexName()),
 	}
 }
 
-func createSearchTable() []utils.SQLRunner {
+func getDropAndCreateSearchTableStatements() []utils.SQLRunner {
 	var statements []utils.SQLRunner
 	statements = append(statements, utils.SQLRunner{Statement: fmt.Sprintf("DROP TABLE IF EXISTS %s CASCADE;", form5500Search), Description: "drop form5500_search table"})
-	statements = append(statements, utils.SQLRunner{Statement: fmt.Sprintf("CREATE TABLE %s (%s);", form5500Search, tableColumns()), Description: "create form5500_search table"})
+	statements = append(statements, utils.SQLRunner{Statement: fmt.Sprintf("CREATE TABLE %s (%s);", form5500Search, getSearchTableColumns()), Description: "create form5500_search table"})
 	return statements
 }
 
-func tableColumns() string {
+func getSearchTableColumns() string {
 	var cols string
 	for _, row := range utils.TableMappings() {
 		cols += fmt.Sprintf("%s %s, ", row.Alias, row.DataType)

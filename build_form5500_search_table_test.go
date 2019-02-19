@@ -5,7 +5,7 @@ import (
 )
 
 func ExampleTableColumns() {
-	fmt.Println(tableColumns())
+	fmt.Println(getSearchTableColumns())
 	// Output:
 	// ack_id text, date_received text, effective_date timestamp, plan_name text, plan_num text, sponsor_name text, sponsor_signed_name text, sponsor_address_1 text, sponsor_address_2 text, sponsor_city text, sponsor_state text, sponsor_zip text, sponsor_ein text, sponsor_phone text, sponsor_naics text, pension_benefit_codes text, admin_name text, admin_signed_name text, admin_address_1 text, admin_address_2 text, admin_city text, admin_state text, admin_zip text, admin_ein text, admin_phone text, active_participants int, total_assets numeric(19,2), rk_name text,rk_ein text,tpa_name text,tpa_ein text,advisor_name text,advisor_ein text,inv_collective_trusts boolean,inv_separate_accounts boolean,inv_mutual_funds boolean,inv_general_accounts boolean,inv_company_stock boolean,table_origin text
 }
@@ -23,7 +23,7 @@ func ExampleSelectShortFormTable() {
 }
 
 func ExampleCreateSearchTable() {
-	s := createSearchTable()
+	s := getDropAndCreateSearchTableStatements()
 	fmt.Println(s[0].Description)
 	fmt.Println(s[0].Statement)
 	fmt.Println(s[1].Description)

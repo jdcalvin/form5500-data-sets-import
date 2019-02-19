@@ -57,7 +57,7 @@ func main() {
 	}
 
 	if *isBuildFlag {
-		buildTable(form5500Flag.Section, form5500Flag.Years)
+		rebuildSearchTable(form5500Flag.Section, form5500Flag.Years)
 	}
 
 	if *isExtensionFlag != "" {

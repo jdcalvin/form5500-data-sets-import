@@ -64,3 +64,30 @@ Install go-bindata https://github.com/jteeuwen/go-bindata
 Run command to create bindata.go file in internal/utils:
 
 `go-bindata -o internal/utils/bindata.go  -pkg utils assets/...`
+
+### Testing Update
+
+```
+root@dc15e85f96ce:/opt/client_data_import/scripts/staging# PGPASSWORD=$FORM5500_RDS_PASSWORD psql -h $FORM5500_RDS_ENDPOINT -U $FORM5500_RDS_USER -d $FORM5500_RDS_NAME -a -w -c "select MIN(ack_id), MAX(ack_id) from form_5500_search;"
+select MIN(ack_id), MAX(ack_id) from form_5500_search;
+              min               |              max               
+--------------------------------+--------------------------------
+ 20140102080855P030152717379001 | 20180625230109P040010367981001
+(1 row)
+
+
+root@dc15e85f96ce:/opt/client_data_import/scripts/staging# PGPASSWORD=$FORM5500_RDS_PASSWORD psql -h $FORM5500_RDS_ENDPOINT -U $FORM5500_RDS_USER -d $FORM5500_RDS_NAME -a -w -c "select count(*) from form_5500_search;"
+select count(*) from form_5500_search;
+  count  
+---------
+ 3467376
+(1 row)
+
+
+root@dc15e85f96ce:/opt/client_data_import/scripts/staging# PGPASSWORD=$FORM5500_RDS_PASSWORD psql -h $FORM5500_RDS_ENDPOINT -U $FORM5500_RDS_USER -d $FORM5500_RDS_NAME -a -w -c "select count(*) from form5500_search_view;"
+select count(*) from form5500_search_view;
+  count  
+---------
+ 1003885
+(1 row)
+```

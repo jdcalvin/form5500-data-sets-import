@@ -65,7 +65,9 @@ Run command to create bindata.go file in internal/utils:
 
 `go-bindata -o internal/utils/bindata.go  -pkg utils assets/...`
 
-### Testing Update
+### Testing Data Update
+
+Run these queries to see what sort of data is actually available to connecting apps:
 
 ```
 root@dc15e85f96ce:/opt/client_data_import/scripts/staging# PGPASSWORD=$FORM5500_RDS_PASSWORD psql -h $FORM5500_RDS_ENDPOINT -U $FORM5500_RDS_USER -d $FORM5500_RDS_NAME -a -w -c "select MIN(ack_id), MAX(ack_id) from form_5500_search;"

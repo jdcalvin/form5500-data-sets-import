@@ -7,8 +7,6 @@ phases:
       - ls /go/src
   build:
     commands:
-      - mkdir /go/src/github.com/fiduciary-benchmarks/form5500
-      - cp -R . /go/src/github.com/fiduciary-benchmarks/form5500/
       - cd /go/src/github.com/fiduciary-benchmarks/form5500/internal/utils && go build && go install
       - cd ../../
       - GOOS=linux go build -o $GOROOT/form5500

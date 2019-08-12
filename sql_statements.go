@@ -30,7 +30,7 @@ func getUpdateFromSchedulesStatements(section string, year string) []utils.SQLRu
 		},
 		{
 			Statement:   updateProviderFromScheduleCItem3(section, year, "advisor", "'26','27'"),
-			Description: fmt.Sprintf("Determining Advisor from schedule C item 2 %s", year),
+			Description: fmt.Sprintf("Determining Advisor from schedule C item 3 %s", year),
 		},
 	}
 	return executableStatements
@@ -103,7 +103,7 @@ func updateProviderFromScheduleCItem2(section string, year string, provider stri
 
 	rk_id_update := ""
 	if provider == "rk" {
-		rk_id_update = ", rk_id=foo_1.fbi_id"
+		rk_id_update = ", rk_company_id=foo_1.fbi_id"
 	}
 	return fmt.Sprintf("UPDATE form_5500_search as f SET %[4]s_name=foo_1.%[1]s, %[4]s_ein=foo_1.%[2]s %[5]s FROM (%[3]s) as foo_1 WHERE foo_1.ack_id=f.ack_id", name, ein, selectStatement, provider, rk_id_update)
 }
@@ -132,7 +132,7 @@ func updateProviderFromScheduleCItem3(section string, year string, provider stri
 
 	rk_id_update := ""
 	if provider == "rk" {
-		rk_id_update = ", rk_id=foo_1.fbi_id"
+		rk_id_update = ", rk_company_id=foo_1.fbi_id"
 	}
 
 	return fmt.Sprintf("UPDATE form_5500_search as f SET %[3]s_name=foo_1.%[1]s %[4]s FROM (%[2]s) as foo_1 WHERE foo_1.ack_id=f.ack_id", name, selectStatement, provider, rk_id_update)

@@ -84,7 +84,7 @@ func getSearchTableColumns() string {
 		cols += fmt.Sprintf("%s %s, ", row.Alias, row.DataType)
 	}
 
-	cols += "rk_id int, "
+	cols += "rk_company_id int, "
 	var providerCols = []string{
 		"rk_name", "rk_ein", "tpa_name", "tpa_ein", "advisor_name", "advisor_ein",
 	}

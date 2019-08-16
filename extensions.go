@@ -136,7 +136,7 @@ func importRkMappings(fname string) error {
 		name := strings.ReplaceAll(line[0], "'", "''")
 		id, _ := strconv.Atoi(line[1])
 		if id != 0 { //conversion returns 0 if it's not a number, probably the header line, and in any case not valid
-			sql += fmt.Sprintf("INSERT INTO sched_c_provider_to_fbi_rk_company_id_mappings (name, fbi_id) VALUES ('%v',%d);", name, id)
+			sql += fmt.Sprintf("INSERT INTO sched_c_provider_to_fbi_rk_company_id_mappings (sched_c_provider_name, fbi_company_id) VALUES ('%v',%d);", name, id)
 			lines++
 		}
 	}

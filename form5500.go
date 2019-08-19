@@ -58,6 +58,7 @@ func main() {
 
 	if *isBuildFlag {
 		rebuildSearchTable(form5500Flag.Section, form5500Flag.Years)
+		findUnmatchedRks()
 	}
 
 	if *isExtensionFlag != "" {

@@ -51,6 +51,16 @@ func (s SQLRunner) Exec() error {
 	return nil
 }
 
+func (s SQLRunner) Query() (*sql.Rows, error) {
+	s.Print()
+	rows, err := db.Query(s.Statement)
+	if err != nil {
+		fmt.Println(s)
+		return rows, err
+	}
+	return rows, nil
+}
+
 // ExecCLI uses psql command line tool to copy data from a csv file
 // Cannot use Exec due to permissions error on aws box
 func (s SQLRunner) ExecCLI() error {

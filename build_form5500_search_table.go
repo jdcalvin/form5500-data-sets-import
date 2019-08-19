@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	utils "github.com/fiduciary-benchmarks/form5500/internal/utils"
@@ -14,6 +15,28 @@ func rebuildSearchTable(section string, years []string) {
 
 	for _, statement := range getRebuildStatements(section, years) {
 		statement.Exec()
+	}
+}
+
+func findUnmatchedRks() {
+	rows, err := utils.SQLRunner{
+		Statement:   fmt.Sprintf("SELECT DISTINCT(rk_name) FROM form5500_search_view WHERE rk_name IS NOT NULL AND rk_company_id IS NULL ORDER BY rk_name;"),
+		Description: fmt.Sprintf("Finding unmatched rks"),
+	}.Query()
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer rows.Close()
+	f, err := os.Create("unmatched_rks.txt")
+	defer f.Close()
+	for rows.Next() {
+		var name string
+		scErr := rows.Scan(&name)
+		if scErr != nil {
+			fmt.Printf("error scanning %v", scErr)
+			return
+		}
+		fmt.Fprintln(f, name)
 	}
 }
 

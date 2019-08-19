@@ -48,6 +48,19 @@ func callExtension(extension string) {
 		if importErr != nil {
 			fmt.Println(importErr)
 		}
+		updateSql := utils.SQLRunner{Statement: `UPDATE form_5500_search
+		SET rk_company_id = foo.fbi_company_id
+		FROM (SELECT sched_c_provider_to_fbi_rk_company_id_mappings.fbi_company_id,
+		             sched_c_provider_to_fbi_rk_company_id_mappings.sched_c_provider_name
+		          FROM sched_c_provider_to_fbi_rk_company_id_mappings
+		        JOIN form_5500_search
+		        ON form_5500_search.rk_name = sched_c_provider_to_fbi_rk_company_id_mappings.sched_c_provider_name) as foo
+		WHERE rk_company_id IS NULL and rk_name IS NOT NULL and foo.sched_c_provider_name = rk_name`,
+			Description: "Updating records with new rk mappings"}
+		updErr := updateSql.Exec()
+		if updErr != nil {
+			fmt.Printf("Error updating rks: %v", updErr)
+		}
 	} else {
 		log.Fatal("Invalid extension")
 	}

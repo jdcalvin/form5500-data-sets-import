@@ -18,7 +18,7 @@ func rebuildSearchTable(section string, years []string) {
 	}
 }
 
-func findUnmatchedRks() {
+func findUnmatchedRks(jiraCreator string, jiraToken string, jiraAssignee string) {
 	rows, err := utils.SQLRunner{
 		Statement:   fmt.Sprintf("SELECT DISTINCT(rk_name) FROM form5500_search_view WHERE rk_name IS NOT NULL AND rk_company_id IS NULL ORDER BY rk_name;"),
 		Description: fmt.Sprintf("Finding unmatched rks"),
@@ -38,6 +38,7 @@ func findUnmatchedRks() {
 		}
 		fmt.Fprintln(f, name)
 	}
+	utils.CreateJiraIssue(jiraCreator, jiraToken, jiraAssignee)
 }
 
 //private

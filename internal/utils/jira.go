@@ -50,12 +50,12 @@ func CreateJiraIssue(jiraCreator string, jiraToken string, jiraAssignee string) 
 	}
 	fmt.Printf("key: %v", issue.Key)
 
-	r, err := os.Open("unmatched_rks.txt")
+	r, err := os.Open("unmatched_rks.csv")
 	if err != nil {
-		fmt.Println("Failed to open unmatched_rks.txt.  The issue was created but the file was not attached.: ", err)
+		fmt.Println("Failed to open unmatched_rks.csv.  The issue was created but the file was not attached.: ", err)
 		return
 	}
-	_, _, err = client.Issue.PostAttachment(issue.Key, r, "unmatched_rks.txt")
+	_, _, err = client.Issue.PostAttachment(issue.Key, r, "unmatched_rks.csv")
 	if err != nil {
 		fmt.Println("Failed to post attachment: ", err)
 	}

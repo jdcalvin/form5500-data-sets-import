@@ -19,24 +19,24 @@ func rebuildSearchTable(section string, years []string) {
 }
 
 func findUnmatchedRks(jiraCreator string, jiraToken string, jiraAssignee string) {
-	rows, err := utils.SQLRunner{
-		Statement:   fmt.Sprintf("SELECT DISTINCT(rk_name) FROM form5500_search_view WHERE rk_name IS NOT NULL AND rk_company_id IS NULL ORDER BY rk_name;"),
-		Description: fmt.Sprintf("Finding unmatched rks"),
-	}.Query()
+	rows, err := getUnmatchedRksStatement().Query()
 	if err != nil {
 		fmt.Println(err)
 	}
 	defer rows.Close()
-	f, err := os.Create("unmatched_rks.txt")
+	f, err := os.Create("unmatched_rks.csv")
 	defer f.Close()
+	fmt.Fprintln(f, "rk_name, possible_match, company_id, similarity")
 	for rows.Next() {
-		var name string
-		scErr := rows.Scan(&name)
+		var name, match_name string
+		var match_id, match_score string
+		scErr := rows.Scan(&name, &match_name, &match_id, &match_score)
 		if scErr != nil {
 			fmt.Printf("error scanning %v", scErr)
 			return
 		}
-		fmt.Fprintln(f, name)
+		str := fmt.Sprintf("%v,%v,%v,%v", name, match_name, match_id, match_score)
+		fmt.Fprintln(f, strings.ReplaceAll(str, "-1", ""))
 	}
 	utils.CreateJiraIssue(jiraCreator, jiraToken, jiraAssignee)
 }
@@ -147,4 +147,35 @@ func selectShortFormTable(year string, section string) string {
 	}
 	statement += fmt.Sprintf("'sf_%[1]s_%[2]s' as table_origin from f_5500_sf_%[1]s_%[2]s as f_%[1]s_sf", year, section)
 	return statement
+}
+
+func getUnmatchedRksStatement() utils.SQLRunner {
+	return utils.SQLRunner{
+		Statement: fmt.Sprintf(`DROP TABLE IF EXISTS unmatched_rks;
+		CREATE TEMP TABLE unmatched_rks(rk_name text);
+		INSERT INTO unmatched_rks ( SELECT DISTINCT ( rk_name ) FROM form5500_search_view WHERE rk_name IS NOT NULL AND rk_company_id IS NULL );
+
+		DROP TABLE IF EXISTS match_options;
+		CREATE TEMP TABLE match_options ( rk_name text, sched_c_provider_name text, company_id int, lev int );
+		INSERT INTO match_options(
+				SELECT rk_name, sched_c_provider_name, fbi_company_id, levenshtein ( rk_name, sched_c_provider_name )
+				FROM unmatched_rks
+				LEFT JOIN sched_c_provider_to_fbi_rk_company_id_mappings
+				ON LEFT ( rk_name, 2 ) = LEFT ( sched_c_provider_to_fbi_rk_company_id_mappings.sched_c_provider_name, 2 )
+		);
+
+		SELECT DISTINCT ON (match.rk_name)
+					 match.rk_name, COALESCE ( sched_c_provider_name,'' ) possible_match_name, COALESCE ( company_id, -1 ) possible_match_id,  COALESCE ( match_options.lev, -1 ) match_similarity
+				FROM
+		(
+				SELECT rk_name, min(lev) lev
+				FROM match_options
+				GROUP by rk_name
+				) match
+				LEFT JOIN match_options ON match.rk_name=match_options.rk_name AND match.lev=match_options.lev AND match.lev < 6;
+
+		DROP TABLE IF EXISTS unmatched_rks;
+		DROP TABLE IF EXISTS match_options;`),
+		Description: fmt.Sprintf("Finding unmatched rks and suggested matches"),
+	}
 }

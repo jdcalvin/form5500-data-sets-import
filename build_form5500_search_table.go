@@ -77,8 +77,10 @@ func getRebuildStatements(section string, years []string) []utils.SQLRunner {
 		}
 	}
 
-	// - Create materialized view form5500_search_view
+	//remove junk rows
+	executableStatements = append(executableStatements, getRemoveNoAssetRecords())
 
+	// - Create materialized view form5500_search_view
 	executableStatements = append(executableStatements, getCreateMaterializedViewStatement())
 
 	// - Create index for each column in form5500_search_view

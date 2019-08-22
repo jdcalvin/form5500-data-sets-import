@@ -43,6 +43,13 @@ func getCreateMaterializedViewStatement() utils.SQLRunner {
 	}
 }
 
+func getRemoveNoAssetRecords() utils.SQLRunner {
+	return utils.SQLRunner{
+		Statement:   "DELETE FROM form_5500_search WHERE total_assets IS NULL OR total_assets=0",
+		Description: "Removing rows 0 or null total assets",
+	}
+}
+
 //private
 
 func updateFromScheduleH(section string, year string) string {

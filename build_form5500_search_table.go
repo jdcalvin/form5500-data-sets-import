@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	utils "github.com/fiduciary-benchmarks/form5500/internal/utils"
@@ -15,6 +16,29 @@ func rebuildSearchTable(section string, years []string) {
 	for _, statement := range getRebuildStatements(section, years) {
 		statement.Exec()
 	}
+}
+
+func findUnmatchedRks(jiraCreator string, jiraToken string, jiraAssignee string) {
+	rows, err := getUnmatchedRksStatement().Query()
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer rows.Close()
+	f, err := os.Create("unmatched_rks.csv")
+	defer f.Close()
+	fmt.Fprintln(f, "rk_name, possible_match, company_id, similarity")
+	for rows.Next() {
+		var name, match_name string
+		var match_id, match_score string
+		scErr := rows.Scan(&name, &match_name, &match_id, &match_score)
+		if scErr != nil {
+			fmt.Printf("error scanning %v", scErr)
+			return
+		}
+		str := fmt.Sprintf("%v,%v,%v,%v", name, match_name, match_id, match_score)
+		fmt.Fprintln(f, strings.ReplaceAll(str, "-1", ""))
+	}
+	utils.CreateJiraIssue(jiraCreator, jiraToken, jiraAssignee)
 }
 
 //private
@@ -53,8 +77,10 @@ func getRebuildStatements(section string, years []string) []utils.SQLRunner {
 		}
 	}
 
-	// - Create materialized view form5500_search_view
+	//remove junk rows
+	executableStatements = append(executableStatements, getRemoveNoAssetRecords())
 
+	// - Create materialized view form5500_search_view
 	executableStatements = append(executableStatements, getCreateMaterializedViewStatement())
 
 	// - Create index for each column in form5500_search_view
@@ -83,6 +109,8 @@ func getSearchTableColumns() string {
 	for _, row := range utils.TableMappings() {
 		cols += fmt.Sprintf("%s %s, ", row.Alias, row.DataType)
 	}
+
+	cols += "rk_company_id int, "
 	var providerCols = []string{
 		"rk_name", "rk_ein", "tpa_name", "tpa_ein", "advisor_name", "advisor_ein",
 	}
@@ -121,4 +149,35 @@ func selectShortFormTable(year string, section string) string {
 	}
 	statement += fmt.Sprintf("'sf_%[1]s_%[2]s' as table_origin from f_5500_sf_%[1]s_%[2]s as f_%[1]s_sf", year, section)
 	return statement
+}
+
+func getUnmatchedRksStatement() utils.SQLRunner {
+	return utils.SQLRunner{
+		Statement: fmt.Sprintf(`DROP TABLE IF EXISTS unmatched_rks;
+		CREATE TEMP TABLE unmatched_rks(rk_name text);
+		INSERT INTO unmatched_rks ( SELECT DISTINCT ( rk_name ) FROM form5500_search_view WHERE rk_name IS NOT NULL AND rk_company_id IS NULL );
+
+		DROP TABLE IF EXISTS match_options;
+		CREATE TEMP TABLE match_options ( rk_name text, sched_c_provider_name text, company_id int, lev int );
+		INSERT INTO match_options(
+				SELECT rk_name, sched_c_provider_name, fbi_company_id, levenshtein ( rk_name, sched_c_provider_name )
+				FROM unmatched_rks
+				LEFT JOIN sched_c_provider_to_fbi_rk_company_id_mappings
+				ON LEFT ( rk_name, 2 ) = LEFT ( sched_c_provider_to_fbi_rk_company_id_mappings.sched_c_provider_name, 2 )
+		);
+
+		SELECT DISTINCT ON (match.rk_name)
+					 match.rk_name, COALESCE ( sched_c_provider_name,'' ) possible_match_name, COALESCE ( company_id, -1 ) possible_match_id,  COALESCE ( match_options.lev, -1 ) match_similarity
+				FROM
+		(
+				SELECT rk_name, min(lev) lev
+				FROM match_options
+				GROUP by rk_name
+				) match
+				LEFT JOIN match_options ON match.rk_name=match_options.rk_name AND match.lev=match_options.lev AND match.lev < 6;
+
+		DROP TABLE IF EXISTS unmatched_rks;
+		DROP TABLE IF EXISTS match_options;`),
+		Description: fmt.Sprintf("Finding unmatched rks and suggested matches"),
+	}
 }

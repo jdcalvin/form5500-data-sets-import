@@ -30,7 +30,7 @@ func getUpdateFromSchedulesStatements(section string, year string) []utils.SQLRu
 		},
 		{
 			Statement:   updateProviderFromScheduleCItem3(section, year, "advisor", "'26','27'"),
-			Description: fmt.Sprintf("Determining Advisor from schedule C item 2 %s", year),
+			Description: fmt.Sprintf("Determining Advisor from schedule C item 3 %s", year),
 		},
 	}
 	return executableStatements
@@ -40,6 +40,13 @@ func getCreateMaterializedViewStatement() utils.SQLRunner {
 	return utils.SQLRunner{
 		Statement:   utils.ReadAsset("sql/form5500_search_view/create_view.sql"),
 		Description: "Creating materialized view form5500_search_view",
+	}
+}
+
+func getRemoveNoAssetRecords() utils.SQLRunner {
+	return utils.SQLRunner{
+		Statement:   "DELETE FROM form_5500_search WHERE total_assets IS NULL OR total_assets=0 OR pension_benefit_codes='' or pension_benefit_codes IS NULL",
+		Description: "Removing rows 0 or null total assets",
 	}
 }
 
@@ -92,15 +99,22 @@ func updateProviderFromScheduleCItem2(section string, year string, provider stri
 
 	codeTable := fmt.Sprintf("f_sch_c_part1_item2_codes_%s_%s", year, section)
 
-	selectStatement := `SELECT ack_id, %[1]s, %[2]s FROM form_5500_search
+	selectStatement := `SELECT ack_id, %[1]s, %[2]s, fbi_company_id FROM form_5500_search
     JOIN %[3]s ON %[3]s.%[4]s = form_5500_search.ack_id
     -- codeTable.ack_id=scheduleTable.ack_id AND codeTable.row_order=scheduleTable.row_order
-    JOIN %[5]s ON %[5]s.%[4]s = %[3]s.%[4]s AND %[5]s.%[6]s = %[3]s.%[6]s
+		JOIN %[5]s ON %[5]s.%[4]s = %[3]s.%[4]s AND %[5]s.%[6]s = %[3]s.%[6]s
+		LEFT JOIN sched_c_provider_to_fbi_rk_company_id_mappings ON sched_c_provider_to_fbi_rk_company_id_mappings.sched_c_provider_name = %[1]s
     WHERE %[7]s
   `
 	selectStatement = fmt.Sprintf(selectStatement, name, ein, scheduleTable, joinField, codeTable, joinField2, whereClause)
 
-	return fmt.Sprintf("UPDATE form_5500_search as f SET %[4]s_name=foo_1.%[1]s, %[4]s_ein=foo_1.%[2]s FROM (%[3]s) as foo_1 WHERE foo_1.ack_id=f.ack_id", name, ein, selectStatement, provider)
+	rk_id_update := ""
+	if provider == "rk" {
+		rk_id_update = ", rk_company_id=foo_1.fbi_company_id"
+	}
+
+	fmt.Println(fmt.Sprintf("UPDATE form_5500_search as f SET %[4]s_name=foo_1.%[1]s, %[4]s_ein=foo_1.%[2]s %[5]s FROM (%[3]s) as foo_1 WHERE foo_1.ack_id=f.ack_id", name, ein, selectStatement, provider, rk_id_update))
+	return fmt.Sprintf("UPDATE form_5500_search as f SET %[4]s_name=foo_1.%[1]s, %[4]s_ein=foo_1.%[2]s %[5]s FROM (%[3]s) as foo_1 WHERE foo_1.ack_id=f.ack_id", name, ein, selectStatement, provider, rk_id_update)
 }
 
 func updateProviderFromScheduleCItem3(section string, year string, provider string, validCodes string) string {
@@ -116,15 +130,22 @@ func updateProviderFromScheduleCItem3(section string, year string, provider stri
 
 	codeTable := fmt.Sprintf("f_sch_c_part1_item3_codes_%s_%s", year, section)
 
-	selectStatement := `SELECT ack_id, %[1]s FROM form_5500_search
+	selectStatement := `SELECT ack_id, %[1]s, fbi_company_id FROM form_5500_search
     JOIN %[3]s ON %[3]s.%[4]s = form_5500_search.ack_id
     -- codeTable.ack_id=scheduleTable.ack_id AND codeTable.row_order=scheduleTable.row_order
-    JOIN %[5]s ON %[5]s.%[4]s = %[3]s.%[4]s AND %[5]s.%[6]s = %[3]s.%[6]s
+		JOIN %[5]s ON %[5]s.%[4]s = %[3]s.%[4]s AND %[5]s.%[6]s = %[3]s.%[6]s
+		LEFT JOIN sched_c_provider_to_fbi_rk_company_id_mappings ON sched_c_provider_to_fbi_rk_company_id_mappings.sched_c_provider_name = %[1]s
     WHERE %[7]s
   `
 	selectStatement = fmt.Sprintf(selectStatement, name, ein, scheduleTable, joinField, codeTable, joinField2, whereClause)
 
-	return fmt.Sprintf("UPDATE form_5500_search as f SET %[3]s_name=foo_1.%[1]s FROM (%[2]s) as foo_1 WHERE foo_1.ack_id=f.ack_id", name, selectStatement, provider)
+	rk_id_update := ""
+	if provider == "rk" {
+		rk_id_update = ", rk_company_id=foo_1.fbi_company_id"
+	}
+
+	fmt.Println(fmt.Sprintf("UPDATE form_5500_search as f SET %[3]s_name=foo_1.%[1]s %[4]s FROM (%[2]s) as foo_1 WHERE foo_1.ack_id=f.ack_id", name, selectStatement, provider, rk_id_update))
+	return fmt.Sprintf("UPDATE form_5500_search as f SET %[3]s_name=foo_1.%[1]s %[4]s FROM (%[2]s) as foo_1 WHERE foo_1.ack_id=f.ack_id", name, selectStatement, provider, rk_id_update)
 }
 
 func createScheduleCProvider() string {

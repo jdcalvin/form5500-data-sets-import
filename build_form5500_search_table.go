@@ -36,7 +36,7 @@ func findUnmatchedRks(jiraCreator string, jiraToken string, jiraAssignee string)
 			return
 		}
 		str := fmt.Sprintf("%v,%v,%v,%v", name, match_name, match_id, match_score)
-		fmt.Fprintln(f, strings.ReplaceAll(str, "-1", ""))
+		fmt.Fprintln(f, strings.Replace(str, "-1", "", -1))
 	}
 	utils.CreateJiraIssue(jiraCreator, jiraToken, jiraAssignee)
 }

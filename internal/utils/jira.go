@@ -48,7 +48,7 @@ func CreateJiraIssue(jiraCreator string, jiraToken string, jiraAssignee string) 
 		fmt.Println("Unable to create the jira issue.")
 		return
 	}
-	fmt.Printf("key: %v", issue.Key)
+	fmt.Println("key: ", issue.Key)
 
 	r, err := os.Open("unmatched_rks.csv")
 	if err != nil {

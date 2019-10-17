@@ -32,7 +32,7 @@ func findUnmatchedRks(jiraCreator string, jiraToken string, jiraAssignee string)
 		var match_id, match_score string
 		scErr := rows.Scan(&name, &match_name, &match_id, &match_score)
 		if scErr != nil {
-			fmt.Printf("error scanning %v", scErr)
+			fmt.Println("error scanning ", scErr)
 			return
 		}
 		str := fmt.Sprintf("%v,%v,%v,%v", name, match_name, match_id, match_score)

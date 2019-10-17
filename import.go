@@ -5,39 +5,90 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	utils "github.com/jdcalvin/form5500/internal/utils"
-	_ "github.com/lib/pq"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
+
+	utils "github.com/fiduciary-benchmarks/form5500/internal/utils"
+	_ "github.com/lib/pq"
 )
 
 const baseURL string = "http://askebsa.dol.gov/FOIA%20Files/"
 
-func runImport(section string, years []string) {
-	for _, year := range years {
-		createAndPopulateTables(year, section)
-	}
-
+// ImportResult represents information about an individual Form5500 import
+type ImportResult struct {
+	Status  string `json:"status"`
+	Success bool   `json:"success"`
+	Message string `json:"message,omitempty"`
+	Source  string `json:"source,omitempty"`
+	Section string `json:"section,omitempty"`
+	Year    string `json:"year,omitempty"`
 }
 
-func createAndPopulateTables(year string, section string) {
-	for _, name := range tableNames() {
-		tableName := fmt.Sprintf(name, year, section)
-		createTable(tableName, year, section).Exec()
+func runImport(section string, years []string) ([]ImportResult, error) {
+	results := []ImportResult{}
 
-		csvFilename, err := downloadCSV(name, year, section)
+	for _, year := range years {
+		result := createAndPopulateTables(year, section)
+		results = append(results, result...)
+	}
+
+	return results, nil
+}
+
+func createAndPopulateTables(year string, section string) []ImportResult {
+	results := []ImportResult{}
+
+	for _, name := range tableNames() {
+		result := ImportResult{}
+		tableName := fmt.Sprintf(name, year, section)
+		runner, err := createTable(tableName, year, section)
+
 		if err != nil {
-			log.Fatal(err)
+			result = buildErrorResult(year, section, getURL(year, section, name), err)
+			results = append(results, result)
+			continue
 		}
+
+		err = runner.Exec()
+		if err != nil {
+			result = buildErrorResult(year, section, getURL(year, section, name), err)
+			results = append(results, result)
+			continue
+		}
+
+		csvFilename, sourceURL, err := downloadCSV(name, year, section)
+
+		if err != nil {
+			result = buildErrorResult(year, section, sourceURL, err)
+			results = append(results, result)
+			continue
+		}
+
 		defer os.Remove(csvFilename)
 		fmt.Println("Created CSV file: " + csvFilename)
 
-		importCSV(tableName, csvFilename)
+		err = importCSV(tableName, csvFilename)
+
+		if err != nil {
+			result = buildErrorResult(year, section, sourceURL, err)
+			results = append(results, result)
+			continue
+		}
+
+		result.Message = "Import successful"
+		result.Status = "succeeded"
+		result.Success = true
+		result.Source = sourceURL
+		result.Section = section
+		result.Year = year
+		results = append(results, result)
 	}
+	return results
 }
 
 // private
@@ -81,25 +132,35 @@ func tableNames() []string {
 	return tables
 }
 
-func importCSV(tableName string, csvFilename string) {
+func importCSV(tableName string, csvFilename string) error {
 	truncateTable := utils.SQLRunner{
 		Statement:   fmt.Sprintf("TRUNCATE %s", tableName),
 		Description: fmt.Sprintf("Truncating %s", tableName),
 	}
 
-	truncateTable.Exec()
+	err := truncateTable.Exec()
+
+	if err != nil {
+		return err
+	}
 
 	copyCsv := utils.SQLRunner{
 		Statement:   fmt.Sprintf(`\copy %s FROM '%s' DELIMITER ',' CSV HEADER`, tableName, csvFilename),
 		Description: fmt.Sprintf("Copying %s into %s", csvFilename, tableName),
 	}
 
-	copyCsv.ExecCLI()
+	err = copyCsv.ExecCLI()
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func downloadCSV(name string, year string, section string) (string, error) {
+func downloadCSV(name string, year string, section string) (string, string, error) {
 	name = fmt.Sprintf(name, year, section)
-	url := baseURL + fmt.Sprintf("%s/%s/%s.zip", year, section, name)
+	url := getURL(year, section, name)
 
 	fmt.Println("Dowloading ", url)
 
@@ -127,7 +188,7 @@ func downloadCSV(name string, year string, section string) (string, error) {
 
 			tempFile, tempFilename, err := createTempFile(csvFilename)
 			if err != nil {
-				return "", err
+				return "", "", err
 			}
 			defer tempFile.Close()
 
@@ -136,20 +197,26 @@ func downloadCSV(name string, year string, section string) (string, error) {
 				log.Fatal(err)
 			}
 
-			return tempFilename, nil
+			return tempFilename, url, nil
 		}
 	}
 
-	return "", errors.New("CSV not found in ZIP file at " + url)
+	return "", "", errors.New("CSV not found in ZIP file at " + url)
 }
 
-func createTable(tableName string, year string, section string) utils.SQLRunner {
+func createTable(tableName string, year string, section string) (utils.SQLRunner, error) {
 	url := baseURL + fmt.Sprintf("%s/%s/%s_layout.txt", year, section, tableName)
 	fmt.Println("Downloading ", url)
 	resp, err := http.Get(url)
 	if err != nil {
 		fmt.Println("Could not resolve url: ", url)
 		log.Fatal(err)
+	}
+
+	if resp.StatusCode != 200 {
+		log.Printf("Unable to retrieve Form5500 Data File. Status: %s, Status Code: %s", resp.Status, strconv.Itoa(resp.StatusCode))
+		err := fmt.Errorf("Unable to retrieve Form5500 Data File. Status: %s, Status Code: %s", resp.Status, strconv.Itoa(resp.StatusCode))
+		return utils.SQLRunner{}, err
 	}
 	defer resp.Body.Close()
 
@@ -203,7 +270,7 @@ func createTable(tableName string, year string, section string) utils.SQLRunner 
 	sqlLines = append(sqlLines, ");")
 
 	if err := scanner.Err(); err != nil {
-		fmt.Fprintln(os.Stderr, "reading standard input:", err)
+		return utils.SQLRunner{}, err
 	}
 
 	sql := ""
@@ -214,7 +281,7 @@ func createTable(tableName string, year string, section string) utils.SQLRunner 
 	return utils.SQLRunner{
 		Statement:   sql,
 		Description: fmt.Sprintf("Creating table: %s", tableName),
-	}
+	}, nil
 }
 
 func downloadFile(prefix string, url string) (string, error) {
@@ -244,4 +311,19 @@ func createTempFile(prefix string) (*os.File, string, error) {
 		return nil, "", err
 	}
 	return tempFile, tempFile.Name(), nil
+}
+
+func getURL(year string, section string, name string) string {
+	return baseURL + fmt.Sprintf("%s/%s/%s.zip", year, section, name)
+}
+
+func buildErrorResult(section string, year string, source string, err error) ImportResult {
+	result := ImportResult{}
+	result.Message = err.Error()
+	result.Success = false
+	result.Status = "failed"
+	result.Source = source
+	result.Section = section
+	result.Year = year
+	return result
 }

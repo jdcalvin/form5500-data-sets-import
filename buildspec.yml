@@ -1,0 +1,17 @@
+version: 0.2
+phases:
+  install:
+    commands:
+      # get and install dependencies
+      - go get github.com/lib/pq && go install github.com/lib/pq
+      - go get github.com/fiduciary-benchmarks/form5500/internal/utils && go install github.com/fiduciary-benchmarks/form5500/internal/utils
+      - go get github.com/andygrunwald/go-jira && go install github.com/andygrunwald/go-jira
+      - ls /go/src
+  build:
+    commands:
+      - cd /go/src/github.com/fiduciary-benchmarks/form5500/internal/utils && go build && go install
+      - cd ../../
+      - GOOS=linux go build -o $GOROOT/form5500
+artifacts:
+  files:
+    - $GOROOT/form5500
